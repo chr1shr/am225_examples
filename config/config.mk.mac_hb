@@ -1,0 +1,12 @@
+# C++ compiler
+cxx=g++-7 -fopenmp
+
+# Compilation flags
+cflags=-Wall -ansi -pedantic -O3
+
+# BLAS/LAPACK flags for linear algebra
+lp_lflags=-framework Accelerate
+
+# FFTW flags (installed via Homebrew)
+fftw_iflags=-I/opt/local/include
+fftw_lflags=-L/opt/local/include -lfftw3
