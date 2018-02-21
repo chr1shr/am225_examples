@@ -1,0 +1,5 @@
+file_output.o: file_output.cc file_output.hh
+conj_grad.o: conj_grad.cc conj_grad.hh blas.h
+poisson.o: poisson.cc poisson.hh conj_grad.hh blas.h
+rbf.o: rbf.cc rbf.hh conj_grad.hh blas.h lp_solve.hh file_output.hh
+lp_solve.o: lp_solve.cc lp_solve.hh

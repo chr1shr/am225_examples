@@ -1,0 +1,5 @@
+sol_base.o: sol_base.cc sol_base.hh
+sol_euler.o: sol_euler.cc sol_euler.hh sol_base.hh
+sol_ralston.o: sol_ralston.cc sol_ralston.hh sol_base.hh
+sol_heun3.o: sol_heun3.cc sol_heun3.hh sol_base.hh
+sol_rk4.o: sol_rk4.cc sol_rk4.hh sol_base.hh

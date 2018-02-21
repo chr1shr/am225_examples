@@ -1,0 +1,48 @@
+Low-order ODE example codes
+===========================
+This directory contains a suite of codes for doing low-order integration of
+ODEs, and applies it to the Brussellator test problem from Hairer et al. [1]
+
+dy_1/dx = 1 + y_1^2 y_2 - 4 y_1,
+dy_2/dx = 3 y_1 - y_1^2 y_2,
+
+with initial conditions y_1(0)=1.5, y_2(0)=3, simulating up to x=20. The code
+is written using C++ classes to provide flexibility and help with the
+conceptual organization. Five methods are implemented:
+
+- First-order explicit Euler method,
+- Second-order Ralston method,
+- Third-order Heun method,
+- Fourth-order "classic" Runge-Kutta method,
+- Fourth-order implicit Hammer-Hollingsworth method.
+
+A key feature of the code design is to minimize the repetition of code.
+Repeating code provides more places for bugs to be introduced. Based
+on this, the code is broken up into classes in the following way:
+
+- sol_base contains definitions that are common to all methods: the solution
+  itself, the number of degrees of freedom, and the counter for the number of
+  function evaluations.
+
+- euler, ralston, heun3, rk4, and hammer_h are derived classes from sol_base,
+  and contain all of the common routines, plus implementations of the function
+  "step" that does the Runge-Kutta step unique to this method.
+
+- brusselator - contains routines for setting up initial conditions and
+  implementing the function f(x,y) for the test problem.
+
+- brus_euler, brus_ralston, ... - derived classes that contain both the solver
+  and the test problem routines.
+
+The code is split amoung multiple files and can be compiled with GNU Make
+(installed as standard as part of Linux and Mac/Xcode). First, check the
+definitions of cxx and cflags in the "Makefile" and ensure they match your
+system. Then type "make" on the command line. This will first compile the
+class files into object ".o" files. It will then compile two different
+front-end executables:
+
+- ode_test - outputs the result of the Heun method.
+
+- ode_conv - performs a (multithreaded) convergence analysis for the five
+  methods, outputting function evaluations and precision for varying step
+  sizes.

@@ -1,0 +1,21 @@
+DOP853 - the eighth-order Dormand-Prince integrator
+===================================================
+DOP853 is a twelve-step, eighth-order Runge-Kutta method that uses embedded
+5th and 3rd order schemes for adaptive step size selection. The method from
+Dormand and Prince, which is described in detail in Hairer et al., is one of
+the best high-order general purpose integrators available.
+
+Hairer et al. have a Fortran version of DOP853 available online. This
+directory contains a C++ version where the integrator is rewritten into a
+class. Two front-end programs are provided:
+
+- d_test.cc tests the code on the Brusselator test problem. It creates output
+  files called 'dt.out1' that contains the integration steps, and 'dt.out2'
+  that contains dense output based on seventh-order polynomials.
+
+- brus_conv.cc tests the precision of the code for various different numbers
+  of function evaluations.
+
+Note that this code was written by CHR for a different purpose and so some
+parts of the C++ class are different from the other demo codes. In particular
+the solution vector is called w, instead of q.
