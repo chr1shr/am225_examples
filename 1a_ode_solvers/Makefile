@@ -1,6 +1,5 @@
 # Include the configuration file
-cxx=g++-mp-7
-cflags=-fopenmp -Wall -ansi -pedantic
+include ../config.mk
 
 # Lists of files to be built
 objs=sol_base.o sol_euler.o sol_ralston.o sol_heun3.o sol_rk4.o sol_hammer_h.o

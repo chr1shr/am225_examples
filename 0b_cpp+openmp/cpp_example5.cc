@@ -12,7 +12,7 @@ int main() {
     // Assign pointer. Note v itself is a pointer to the start
     // of the array.
     w=v+3;
-    printf("%p %g\n",w,*w);
+    printf("%p %g\n",(void*) w,*w);
 
     // For-loop with pointers
     for(w=v;w<v+32;w++) *w=1.;

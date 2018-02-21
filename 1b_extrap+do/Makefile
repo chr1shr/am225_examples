@@ -1,6 +1,5 @@
 # Include the configuration file
-cxx=g++-mp-7
-cflags=-fopenmp -Wall -ansi -pedantic
+include ../config.mk
 
 # Lists of files to be built
 objs=sol_rk4d.o sol_extrap.o
@@ -14,7 +13,7 @@ all: $(execs)
 
 # A Makefile target to refresh the dependency file
 depend:
-	$(cxx) $(iflags) -MM $(src) >Makefile.dep
+	$(cxx) -MM $(src) >Makefile.dep
 
 # A Makefile target to remove all the built files
 clean:

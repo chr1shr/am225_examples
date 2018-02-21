@@ -18,4 +18,4 @@ class. Two front-end programs are provided:
 
 Note that this code was written by CHR for a different purpose and so some
 parts of the C++ class are different from the other demo codes. In particular
-the solution vector is called w, instead of q.
+the solution vector is called w instead of q.

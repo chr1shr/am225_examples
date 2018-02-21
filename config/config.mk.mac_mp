@@ -9,4 +9,4 @@ lp_lflags=-framework Accelerate
 
 # FFTW flags (installed via MacPorts)
 fftw_iflags=-I/opt/local/include
-fftw_lflags=-L/opt/local/include -lfftw3
+fftw_lflags=-L/opt/local/lib -lfftw3

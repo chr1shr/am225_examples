@@ -3,7 +3,8 @@
 
 #include "sol_base.hh"
 
-/** Class for solving an ODE IVP using the fourth-order Runge-Kutta method. */
+/** Class for solving an ODE IVP using the fourth-order Hammer-Hollingsworth
+ * method. */
 class hammer_h : public sol_base {
     public:
         hammer_h(int dof_);

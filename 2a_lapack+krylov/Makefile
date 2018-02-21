@@ -1,7 +1,5 @@
 # Include the configuration file
-cxx=g++-mp-7
-cflags=-fopenmp -O3 -Wall -ansi -pedantic
-lflags=-framework Accelerate
+include ../config.mk
 
 # Lists of files to be built
 objs=file_output.o conj_grad.o poisson.o rbf.o lp_solve.o
@@ -15,7 +13,7 @@ all: $(execs)
 
 # A Makefile target to refresh the dependency file
 depend:
-	$(cxx) $(iflags) -MM $(src) >Makefile.dep
+	$(cxx) -MM $(src) >Makefile.dep
 
 # A Makefile target to remove all the built files
 clean:
@@ -26,24 +24,24 @@ liblinal.a: $(objs)
 	ar rs $@ $^
 
 %.o: %.cc
-	$(cxx) $(cflags) $(iflags) -c $<
+	$(cxx) $(cflags) -c $<
 
 blas_test: blas_test.cc
-	$(cxx) $(cflags) -o $@ $^ $(lflags)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 blas_test2: blas_test2.cc
-	$(cxx) $(cflags) -o $@ $^ $(lflags)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 basic_cg_test: basic_cg_test.cc liblinal.a
-	$(cxx) $(cflags) -o $@ $^ $(lflags)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 rbf_test: rbf_test.cc liblinal.a
-	$(cxx) $(cflags) -o $@ $^ $(lflags)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 rbf_test2: rbf_test2.cc liblinal.a
-	$(cxx) $(cflags) -o $@ $^ $(lflags)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 rbf_time: rbf_time.cc liblinal.a
-	$(cxx) $(cflags) -o $@ $^ $(lflags)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 .PHONY: clean depend

@@ -37,7 +37,7 @@ int main() {
                 case 1: sb=new brus_ralston();break;
                 case 2: sb=new brus_heun3();break;
                 case 3: sb=new brus_rk4();break;
-                case 4: sb=new brus_hammer_h();
+                default: sb=new brus_hammer_h();
             }
 
             // Perform integration and compute the difference to the reference
