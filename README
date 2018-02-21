@@ -1,0 +1,74 @@
+Harvard Applied Math 225: Code examples
+=======================================
+Harvard AM225 is a graduate course in scientific computing that covers a
+variety of advanced topics in numerical analysis, algorithm design, and
+high-performance computing.
+
+See the main website here:
+
+http://iacs-courses.seas.harvard.edu/courses/am225/
+
+This Git repository contains example codes from the course. The codes are
+primarily written in C++ using the OpenMP library for multithreading. Some
+additional programs in Python are provided.
+
+Compiling
+=========
+The programs make use of the GNU Make utility for automatic building. Each
+directory contains a "Makefile", which contains the compilation rules for
+each program.
+
+Each directory looks for a common configuration file called "config.mk" in the
+top level of the repository, which sets the compiler name and various compiler
+options.
+
+To begin, you must create a "config.mk" file from one of the templates
+provided in the "config" directory. The simplest method is to create a symlink
+(shortcut) from one of the templates. On a Linux system, this can be done by
+typing:
+
+ln -s config/config.mk.linux config.mk
+
+On a Mac system using GCC 7 installed with MacPorts (www.macports.org), use
+the following:
+
+ln -s config/config.mk.mac_mp config.mk
+
+On a Mac system using GCC 7 installed with Homebrew (www.brew.sh), use
+the following:
+
+ln -s config/config.mk.mac_hb config.mk
+
+For a custom configuration, copy one of the files from the "config" directory
+into the root directory, and then manually edit it.
+
+Once the "config.mk" file is created, change into one of the project
+directories and type "make" to compile everything.
+
+Organization
+============
+The course is divided into six Units:
+
+- Unit 0: Introduction and multithreaded programming
+- Unit 1: Advanced ODE integration methods and theory
+- Unit 2: Advanced numerical linear algebra
+- Unit 3: Finite element methods
+- Unit 4: Finite volume methods
+- Unit 5: Special topics in scientific computing
+
+Each Unit has several different directories with programs within them:
+
+0a_root_finding - Introductory root finding examples
+
+0b_cpp+openmp - C++ and OpenMP examples
+
+1a_ode_solvers - A variety of ODE solvers (RK4, Euler, Ralston, etc.)
+
+1b_extrap+do - Dense output examples and extrapolation solvers
+
+1c_dop853 - The eighth-order Dormand-Prince DOP853 integrator
+
+2a_lapack+krylov - Examples using BLAS, LAPACK. Krylov methods applied to a
+radial basis function test case.
+
+2b_fft - Fast Fourier Transform examples
