@@ -8,5 +8,5 @@ cflags=-Wall -ansi -pedantic -O3
 lp_lflags=-framework Accelerate
 
 # FFTW flags (installed via Homebrew)
-fftw_iflags=-I/opt/local/include
-fftw_lflags=-L/opt/local/include -lfftw3
+fftw_iflags=
+fftw_lflags=-lfftw3
