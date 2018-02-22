@@ -42,4 +42,4 @@ int main() {
         im=c1[i][1];
         printf("%g %g\n",1/(4096/44000.)*i,sqrt(re*re+im*im));
     }
-}    
+}
