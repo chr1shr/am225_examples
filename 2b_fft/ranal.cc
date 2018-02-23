@@ -17,7 +17,8 @@ int main() {
     fclose(fp);
 
     // Allocate memory for FFTW input data, and convert to double precision
-    double *fld=(double*) fftw_malloc(sizeof(double)*n);
+    //double *fld=(double*) fftw_malloc(sizeof(double)*n);
+    double *fld=fftw_alloc_real(n);
     for(i=0;i<n;i++) {
         fld[i]=e[i];
     }
@@ -27,14 +28,14 @@ int main() {
     fftw_complex *c1=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*fftn);
 
     // Make FFTW plan associated with performing this FFT
-    fftw_plan plan_dft(fftw_plan_dft_r2c_1d(n,fld,c1,FFTW_ESTIMATE));
+    fftw_plan plan_dft(fftw_plan_dft_r2c_1d(n,fld,c1,FFTW_PATIENT));
     fftw_execute(plan_dft);
 
     // Optional timing routine
-    /*double t0=omp_get_wtime();
+    double t0=omp_get_wtime();
     for(int i=0;i<50000;i++) fftw_execute(plan_dft);
     printf("Time %g ms\n",1e3/50000*(omp_get_wtime()-t0));
-    return 1;*/
+    return 1;
 
     // Output magnitudes of each term
     for(i=0;i<fftn;i++) {

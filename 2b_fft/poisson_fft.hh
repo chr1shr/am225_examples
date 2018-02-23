@@ -5,8 +5,11 @@
 
 class poisson_fft {
     public:
+        /** The number of gridpoints in one dimension. */
         const int n;
+        /** The total number of gridpoints. */
         const int nn;
+        /** The grid spacing. */
         const double h;
         double* const f;
         double* const v;

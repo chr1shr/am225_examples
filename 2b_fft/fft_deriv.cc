@@ -4,7 +4,7 @@
 #include <fftw3.h>
 #include "omp.h"
 
-const int n=32;
+const int n=24;
 const double h=2*M_PI/n;
 const double ninv=1./n;
 

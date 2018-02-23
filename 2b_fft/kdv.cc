@@ -8,12 +8,17 @@ void kdv::ff(double t_,double *in,double *out) {
     const double ninv=1./n;
     for(int i=0;i<n;i++) der[i]=in[i];
 
+    // Compute the first and third derivatives
     fftw_execute(plan1);
     for(int i=0;i<fftn;i++) {
         re=c1[i][0];
         im=c1[i][1];
+
+	// First derivative Fourier spectrum
         c1[i][0]=-ninv*i*im;
         c1[i][1]=ninv*i*re;
+
+	// Third derivative Fourier spectrum
         c2[i][0]=ninv*i*i*i*im;
         c2[i][1]=-ninv*i*i*i*re;
     }
