@@ -2,9 +2,9 @@
 include ../config.mk
 
 # Lists of files to be built
-objs=poisson_fft.o file_output.o sol_base.o sol_rk4.o kdv.o
+objs=poisson_fft.o schwarz.o file_output.o sol_base.o sol_rk4.o kdv.o
 src=$(patsubst %.o,%.cc,$(objs))
-execs=ranal pfft_test pfft_conv fft_deriv kdv_test
+execs=ranal pfft_test pfft_conv fft_deriv kdv_test sch_test
 
 all: $(objs) $(execs)
 
@@ -35,6 +35,9 @@ fft_deriv: fft_deriv.cc
 	$(cxx) $(cflags) $(fftw_iflags) -o $@ $^ $(fftw_lflags)
 
 kdv_test: kdv_test.cc $(objs)
+	$(cxx) $(cflags) $(fftw_iflags) -o $@ $^ $(fftw_lflags)
+
+sch_test: sch_test.cc $(objs)
 	$(cxx) $(cflags) $(fftw_iflags) -o $@ $^ $(fftw_lflags)
 
 .PHONY: clean depend
