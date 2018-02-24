@@ -71,4 +71,4 @@ Each Unit has several different directories with programs within them:
 2a_lapack+krylov - Examples using BLAS, LAPACK. Krylov methods applied to a
 radial basis function test case.
 
-2b_fft - Fast Fourier Transform examples
+2b_fft+ddecomp - Fast Fourier Transform and domain decomposition examples
