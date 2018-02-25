@@ -15,7 +15,7 @@ class rk4d {
         rk4d(int dof_);
         virtual ~rk4d();
         void print(double t_,double *in);
-	void dense_output(double theta,double dt);
+        void dense_output(double theta,double dt);
         void solve_fixed(double t_end,int iters,bool output,int d_steps);
         void step(double dt);
         virtual void init() = 0;

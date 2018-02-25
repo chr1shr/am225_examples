@@ -9,7 +9,7 @@ const double tol=1e-14;
 
 // Function to consider
 double f(double x,double lam) {
-	return lam-cos(x);
+    return lam-cos(x);
 }
 
 double ridders(double lam) {

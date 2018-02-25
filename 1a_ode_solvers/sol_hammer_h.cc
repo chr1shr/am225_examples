@@ -52,8 +52,8 @@ void hammer_h::step(double dt) {
             d=k2[i]-k2b[i];delsq+=d*d;
         }
 
-	// Switch k1<->k1b and k2<->k2b array pointers. This will make k1 & k2
-	// be used as the new values on the next iteration.
+        // Switch k1<->k1b and k2<->k2b array pointers. This will make k1 & k2
+        // be used as the new values on the next iteration.
         c=k1b;k1b=k1;k1=c;
         c=k2b;k2b=k2;k2=c;
     } while(delsq>1e-25);

@@ -12,5 +12,5 @@ int main() {
 
     // Print out discrepancies
     for(int i=0;i<4096;i++)
-	if(c[i]!=i*i) printf("%d %d\n",i,c[i]);
+    if(c[i]!=i*i) printf("%d %d\n",i,c[i]);
 }
