@@ -12,8 +12,8 @@ const int n_max=131072;
  * \param[in] flags the flags to use in the fftw_plan.
  * \return The wall clock time. */
 double fftw_time(double *f,fftw_complex *c,int n,unsigned flags) {
-    double t0=omp_get_wtime(),t1;int k=0;
     fftw_plan plan_dft(fftw_plan_dft_r2c_1d(n,f,c,flags));
+    double t0=omp_get_wtime(),t1;int k=0;
 
     // Execute as many FFTs as will fit into one second
     do {
@@ -38,10 +38,11 @@ int main() {
 
     // Time the FFTW execution using the three different planning routines 
     for(int n=16;n<=n_max;n<<=1)
-        printf("%d %g %g %g\n",n,
+        printf("%d %g %g %g %g\n",n,
                fftw_time(f,c,n,FFTW_ESTIMATE),
                fftw_time(f,c,n,FFTW_MEASURE),
-               fftw_time(f,c,n,FFTW_PATIENT));
+               fftw_time(f,c,n,FFTW_PATIENT),
+               fftw_time(f,c,n,FFTW_EXHAUSTIVE));
 
     // Free dynamically allocated memory
     fftw_free(c);
