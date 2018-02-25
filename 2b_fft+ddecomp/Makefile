@@ -4,7 +4,7 @@ include ../config.mk
 # Lists of files to be built
 objs=poisson_fft.o schwarz.o file_output.o sol_base.o sol_rk4.o kdv.o
 src=$(patsubst %.o,%.cc,$(objs))
-execs=music_fft pfft_test pfft_conv fft_deriv kdv_test sch_test
+execs=music_fft fftw_time pfft_test pfft_conv fft_deriv kdv_test sch_test
 
 all: $(objs) $(execs)
 
@@ -29,6 +29,9 @@ pfft_test: pfft_test.cc $(objs)
 	$(cxx) $(cflags) $(fftw_iflags) -o $@ $^ $(fftw_lflags)
 
 pfft_conv: pfft_conv.cc $(objs)
+	$(cxx) $(cflags) $(fftw_iflags) -o $@ $^ $(fftw_lflags)
+
+fftw_time: fftw_time.cc
 	$(cxx) $(cflags) $(fftw_iflags) -o $@ $^ $(fftw_lflags)
 
 fft_deriv: fft_deriv.cc
