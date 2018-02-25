@@ -1,46 +1,40 @@
 #include <cstdio>
 #include <cmath>
-
 #include <fftw3.h>
 #include "omp.h"
 
 const int n=8192;
 
 int main() {
-    int i;
-    float e[n];
-    double re,im;
 
     // Read in the binary data in single precision
+    float e[n];
     FILE *fp=fopen("bob.raw","rb");
     fread(e,sizeof(float),n,fp);
     fclose(fp);
 
-    // Allocate memory for FFTW input data, and convert to double precision
-    //double *fld=(double*) fftw_malloc(sizeof(double)*n);
-    double *fld=fftw_alloc_real(n);
-    for(i=0;i<n;i++) {
-        fld[i]=e[i];
-    }
+    // Allocate memory for FFTW input data, and convert sound
+    // sample to double precision
+    double *f=fftw_alloc_real(n),re,im;
+    for(int i=0;i<n;i++) f[i]=e[i];
 
     // Allocate memory for complex FFTW output data
     int fftn=n/2+1;
-    fftw_complex *c1=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*fftn);
+    fftw_complex *c=fftw_alloc_complex(n);
 
-    // Make FFTW plan associated with performing this FFT
-    fftw_plan plan_dft(fftw_plan_dft_r2c_1d(n,fld,c1,FFTW_PATIENT));
+    // Make FFTW plan, and perform the transform
+    fftw_plan plan_dft(fftw_plan_dft_r2c_1d(n,f,c,FFTW_ESTIMATE));
     fftw_execute(plan_dft);
 
-    // Optional timing routine
-    double t0=omp_get_wtime();
-    for(int i=0;i<50000;i++) fftw_execute(plan_dft);
-    printf("Time %g ms\n",1e3/50000*(omp_get_wtime()-t0));
-    return 1;
-
     // Output magnitudes of each term
-    for(i=0;i<fftn;i++) {
-        re=c1[i][0];
-        im=c1[i][1];
-        printf("%g %g\n",1/(4096/44000.)*i,sqrt(re*re+im*im));
+    for(int i=0;i<fftn;i++) {
+        re=c[i][0];
+        im=c[i][1];
+        printf("%g %g\n",44000./(n/2)*i,sqrt(re*re+im*im));
     }
+
+    // Free dynamically allocated memory
+    fftw_destroy_plan(plan_dft);
+    fftw_free(c);
+    fftw_free(f);
 }
