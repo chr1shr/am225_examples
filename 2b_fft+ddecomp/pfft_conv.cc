@@ -7,7 +7,7 @@ int main() {
     // Loop over a range of grid sizes. Note that while FFTW achieves better
     // performance when the grid size is a power of two, it will achieve
     // n*log(n) scaling for all n.
-    for(int n=10;n<=1024;n+=n/3) {
+    for(int n=10;n<=2048;n+=n>>1) {
         poisson_fft pf(n);
 
         // Initialize the source term for the manufactured solution

@@ -1,7 +1,7 @@
 #include "poisson_fft.hh"
 
 int main() {
-    poisson_fft pf(32);
+    poisson_fft pf(64);
 
     pf.init();
     pf.solve();

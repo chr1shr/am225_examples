@@ -4,10 +4,10 @@
 #include "poisson_fft.hh"
 
 /** Initializes the class for solving the 2D Poisson problem on a square
- * [-1,1]^2 using the fast Fourier transform.
+ * [0,1]^2 using the fast Fourier transform.
  * \param[in] n the number of non-zero gridpoints in one direction. */
 poisson_fft::poisson_fft(int n_)
-    : n(n_), nn(n*n), h(2./(n+1)), f(fftw_alloc_real(nn)),
+    : n(n_), nn(n*n), h(1./(n+1)), f(fftw_alloc_real(nn)),
     v(fftw_alloc_real(nn)), w(fftw_alloc_real(nn)), lam(new double[n]),
     plan_fwd(fftw_plan_r2r_2d(n,n,f,w,FFTW_RODFT00,FFTW_RODFT00,FFTW_MEASURE)),
     plan_bck(fftw_plan_r2r_2d(n,n,w,v,FFTW_RODFT00,FFTW_RODFT00,FFTW_MEASURE)) {
@@ -15,6 +15,7 @@ poisson_fft::poisson_fft(int n_)
     // Initialize the table of eigenvalues
     const double fac=M_PI/(n+1);
     for(int j=0;j<n;j++) lam[j]=2*(1-cos(fac*(j+1)));
+    //for(int j=0;j<n;j++) lam[j]=fac*fac*(j+1)*(j+1);
 }
 
 /** The class destructor frees the dynamically allocated memory, including the
@@ -31,10 +32,10 @@ poisson_fft::~poisson_fft() {
 /** Initializes the source term to be a stepped function. */
 void poisson_fft::init() {
     for(int j=0;j<n;j++) {
-        double y=-1+(j+1)*h;
+        double y=(j+1)*h;
         for(int i=0;i<n;i++) {
-            double x=-1+(i+1)*h;
-            f[i+n*j]=fabs(x)<0.5&&fabs(y)<0.5?(x>0?-1:1):0;
+            double x=(i+1)*h;
+            f[i+n*j]=fabs(x-0.5)<0.25&&fabs(y-0.5)<0.25?(x>0.5?-1:1):0;
         }
     }
 }
@@ -89,7 +90,7 @@ void poisson_fft::output_solution(const char* filename) {
 
     // Set last row to zero, call output routine, and free output array
     while(f2<fld+ne*ne) *(f2++)=0.;
-    gnuplot_output(filename,fld,ne,ne,-1,1,-1,1);
+    gnuplot_output(filename,fld,ne,ne,0,1,0,1);
     delete [] fld;
 }
 
@@ -97,10 +98,10 @@ void poisson_fft::output_solution(const char* filename) {
  * v(x,y)=(1-x*x)*(1-y*y)*exp(x). */
 void poisson_fft::init_mms() {
     for(int j=0;j<n;j++) {
-        double y=-1+(j+1)*h;
+        double y=(j+1)*h;
         for(int i=0;i<n;i++) {
-            double x=-1+(i+1)*h;
-            f[i+n*j]=exp(x)*(3-y*y-4*x*(y*y-1)-x*x*(1+y*y));
+            double x=(i+1)*h;
+            f[i+n*j]=-exp(x)*x*(-2-3*y+3*y*y+x*(2-y+y*y));
         }
     }
 }
@@ -110,11 +111,11 @@ void poisson_fft::init_mms() {
 double poisson_fft::l2_error_mms() {
     double l2=0,del;
     for(int j=0;j<n;j++) {
-        double y=-1+(j+1)*h;
+        double y=(j+1)*h;
         for(int i=0;i<n;i++) {
-            double x=-1+(i+1)*h;
-            del=v[i+n*j]-exp(x)*(1-x*x)*(1-y*y);
-            l2=del*del;
+            double x=(i+1)*h;
+            del=v[i+n*j]-exp(x)*x*(1-x)*y*(1-y);
+            l2+=del*del;
         }
     }
     return sqrt(h*h*l2);

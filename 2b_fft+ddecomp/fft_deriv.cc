@@ -4,7 +4,7 @@
 #include <fftw3.h>
 #include "omp.h"
 
-const int n=24;
+const int n=32;
 const double h=2*M_PI/n;
 const double ninv=1./n;
 
@@ -50,6 +50,7 @@ int main() {
     }
     printf("# L2 error: %g\n",sqrt(l2*ninv));
 
+    // Remove dynamically allocated arrays and FFTW plans
     fftw_destroy_plan(plan2);
     fftw_destroy_plan(plan1);
     fftw_free(c1);

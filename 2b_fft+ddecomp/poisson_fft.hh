@@ -29,7 +29,7 @@ class poisson_fft {
         /** Outputs the source term in the 2D Gnuplot matrix format.
          * \param[in] filename the name of the file to write to. */
         inline void output_source(const char* filename) {
-            gnuplot_output(filename,f,n,n,-1+h,1-h,-1+h,1-h);
+            gnuplot_output(filename,f,n,n,h,1-h,h,1-h);
         }
     private:
         /** An array holding the eigenvalues of the one-dimensional Poisson
