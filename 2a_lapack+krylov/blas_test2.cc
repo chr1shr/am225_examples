@@ -10,8 +10,8 @@ const double duration=2.;
 
 int main() {
 
-    // Maximum array size to try: set to 2^26, or 64 MB
-    const int n=1<<26;
+    // Maximum array size to try: set to 2^24
+    const int n=1<<24;
 
     // Create large arrays and fill with data
     double *a=new double[n],*b=new double[n],*c=new double[n];
@@ -28,7 +28,7 @@ int main() {
     double alpha=0.12,beta=0.5,t0,t1,t2;
     char trans='n';
     int num_self,num_blas;
-    for(int k=8;k<=(1<<13);k+=1+(k>>1)) {
+    for(int k=8;k<=(1<<12);k+=1+(k>>1)) {
         num_self=num_blas=0;
 
         // Test manual routine for doing b=b+alpha*a. First approach uses

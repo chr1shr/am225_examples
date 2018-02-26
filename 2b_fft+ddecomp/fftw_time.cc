@@ -17,9 +17,10 @@ double fftw_time(double *f,fftw_complex *c,int n,unsigned flags) {
 
     // Execute as many FFTs as will fit into one second
     do {
-        fftw_execute(plan_dft);
-        k++;t1=omp_get_wtime();
-    } while(t1<t0+1);
+        fftw_execute(plan_dft);fftw_execute(plan_dft);
+        fftw_execute(plan_dft);fftw_execute(plan_dft);
+        k+=4;t1=omp_get_wtime();
+    } while(t1<t0+2);
 
     // Deallocate the plan and return the mean wall clock time
     fftw_destroy_plan(plan_dft);
