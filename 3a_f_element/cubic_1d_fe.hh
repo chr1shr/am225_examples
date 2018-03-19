@@ -19,6 +19,7 @@ class cubic_1d_fe : public conj_grad {
         void init_slope();
         void init_mms();
         double l2_norm_mms();
+        void print_matrix();
         void print(FILE *fp);
         void print(const char* filename);
         inline void print() {print(stdout);}

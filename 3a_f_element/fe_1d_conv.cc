@@ -1,10 +1,13 @@
 #include "cubic_1d_fe.hh"
 
+#include <cmath>
+
 int main() {
 
-#pragma omp parallel for schedule(dynamic)
-    for(int i=10;i<1000;i+=i>>1) {
-        cubic_1d_fe cf(i);
+#pragma omp parallel for schedule(dynamic) ordered
+    for(int i=0;i<=30;i++) {
+        int j=int(10*pow(100,i/30.));
+        cubic_1d_fe cf(j);
 
         cf.init_mms();
         cf.solve();
