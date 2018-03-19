@@ -49,15 +49,9 @@ void cubic_1d_fe::mul_A(double *in,double *out) {
                         3/8.,-297/80.,297/40.,-327/80.,
                         -13/80.,39/40.,-327/80.,131/40.};
     for(i=0;i<3*n;i++) out[i]=0.;
-    double qq=in[3*n-1];
-in[3*n-1]=0;
 
     for(k=0;k<3*n;k+=3) for(i=(k==0?1:0);i<4;i++)
             for(j=(k==0?1:0);j<4;j++) out[-1+k+i]+=((k+1./h)*B[i+4*j]+C[i+4*j])*in[-1+k+j];
-            //for(j=(k==0?1:0);j<4;j++) out[-1+k+i]+=1./h*B[i+4*j]*in[-1+k+j];
-
-    in[3*n-1]=qq;
-    out[3*n-1]=in[3*n-1];
 }
 
 void cubic_1d_fe::assemble_b() {
@@ -72,12 +66,8 @@ void cubic_1d_fe::assemble_b() {
     for(k=0;k<3*n;k+=3) for(i=(k==0?1:0);i<4;i++)
         for(j=0;j<4;j++) b[-1+k+i]-=D[i+4*j]*f[k+j];
 
-    for(i=0;i<3*n;i++) {
-        b[i]*=h;
-//        printf("%d %g\n",i,b[i]);
-    }
-    b[3*n-1]+=g;
-    b[3*n-1]=0;
+    for(i=0;i<3*n;i++) b[i]*=h;
+    b[3*n-1]+=2*g;
 }
 
 void cubic_1d_fe::print(FILE *fp) {
@@ -87,7 +77,7 @@ void cubic_1d_fe::print(FILE *fp) {
 }
 
 double cubic_1d_fe::l2_norm_mms() {
-    double l2=0.,xx=1.+h;
+    double l2=0.,xx=1.;
     for(int i=0;i<3*n-1;i++) {
         xx+=h;
         l2+=mms_dsq(xx,x[i]);

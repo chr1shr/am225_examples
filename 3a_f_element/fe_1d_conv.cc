@@ -8,6 +8,7 @@ int main() {
     for(int i=0;i<=30;i++) {
         int j=int(10*pow(100,i/30.));
         cubic_1d_fe cf(j);
+        cf.g=exp(-1)*5*M_PI;
 
         cf.init_mms();
         cf.solve();

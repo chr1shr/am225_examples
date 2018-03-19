@@ -4,10 +4,10 @@
 
 int main() {
 
-    cubic_1d_fe cf(90);
-    cf.g=0.5;//exp(-1)*5*M_PI;
+    cubic_1d_fe cf(32);
+    cf.g=-0.05;
 
-    cf.init_const();
+    cf.init_slope();
 
 //    cf.print_matrix();
     cf.solve();
