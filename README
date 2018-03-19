@@ -72,3 +72,5 @@ Each Unit has several different directories with programs within them:
 radial basis function test case.
 
 2b_fft+ddecomp - Fast Fourier Transform and domain decomposition examples
+
+3a_f_element - Finite element examples
