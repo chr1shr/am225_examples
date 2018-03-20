@@ -6,11 +6,17 @@
 #include <cstdio>
 #include <cmath>
 
+/** Class for solving an elliptic PDE problem over the domain [1,2] using
+ * piecewise cubic basis functions. */
 class cubic_1d_fe : public conj_grad {
     public:
+        /** The number of intervals to divide the domain into. */
         const int n;
+        /** The source function. */
         double* const f;
+        /** The grid spacing. */
         const double h;
+        /** The Neumann condition to apply at x=2. */
         double g;
         cubic_1d_fe(int n_) : conj_grad(3*n_),
            n(n_), f(new double[3*n+1]), h(1./3/n) {}
@@ -30,10 +36,6 @@ class cubic_1d_fe : public conj_grad {
             return del*del;
         }
         void assemble_b();
-        double *rk;
-        double *pk;
-        double *zk;
-        double *yk;
 };
 
 #endif
