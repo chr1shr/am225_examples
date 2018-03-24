@@ -11,7 +11,7 @@ execs=music_fft fftw_time pfft_test pfft_conv fft_deriv kdv_test sch_test schur_
 all: $(objs) $(execs)
 
 # Include the file dependencies
-#-include Makefile.dep
+-include Makefile.dep
 
 # A Makefile target to refresh the dependency file
 depend:

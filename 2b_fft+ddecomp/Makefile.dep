@@ -1,0 +1,9 @@
+poisson_fft.o: poisson_fft.cc poisson_fft.hh file_output.hh
+schwarz.o: schwarz.cc schwarz.hh poisson_fft.hh file_output.hh
+conj_grad.o: conj_grad.cc conj_grad.hh blas.h
+schur.o: schur.cc schur.hh poisson_fft.hh file_output.hh conj_grad.hh \
+ blas.h
+file_output.o: file_output.cc file_output.hh
+sol_base.o: sol_base.cc sol_base.hh
+sol_rk4.o: sol_rk4.cc sol_rk4.hh sol_base.hh
+kdv.o: kdv.cc kdv.hh sol_rk4.hh sol_base.hh
