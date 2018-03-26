@@ -3,7 +3,7 @@
 #include "conj_grad.hh"
 
 /** Solve Poisson on [-1,1]x[0,1] by decomposing it into the two glued squares
- *  (1) [-1,0]x[0,1] and (2) [ 0,1]x[0,1].
+ *  (1) [-1,0]x[0,1] and (2) [0,1]x[0,1].
  *
  *  The grid looks like:
  * 

@@ -15,7 +15,7 @@ schur::~schur()
 }
 
 /** Solve Poisson using the Schur complement method.
- * \param[in] f : A function handle to the  source term. */
+ * \param[in] f : A function handle to the source term. */
 void schur::solve(const std::function<double(double,double)>& f)
 {
     // Evaluate the source term at the gridpoints
