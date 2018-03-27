@@ -7,6 +7,8 @@
 extern "C" {
     void dgesv_(int *n,int *nrhs,double *a,int *lda,int *ipivot,
             double *b,int *ldb,int *info);
+    void dgbsv_(int *n,int *kl,int *ku,int *nrhs,double *ab,int *ldab,int *ipiv,
+            double *b,int *ldb,int *info);
     void dsysv_(char* uplo,int *n,int *nrhs,double *a,int *lda,int *ipivot,
             double *b,int *ldb,double *work,int *lwork,int *info);
     void dsyev_(char* jobz,char* uplo,int *n,double *a,int *lda,double *w,
@@ -65,6 +67,28 @@ void solve_sym_matrix(int n,double *A,double *x) {
 
     // Check for a non-zero value in info variable, indicating an error
     if(info!=0) lapack_fail();
+}
+
+/** Solves the matrix system Ax=b for the case when A is banded.
+ * \param[in] n the dimension of the matrix.
+ * \param[in] (kl,lu) the number of subdiagonals and superdiagonals.
+ * \param[in] A the matrix terms; see DGBSV documentation for full details.
+ * \param[in] x the source vector, which will be replaced by the solution
+ *              when the routine exits. */
+void solve_banded_matrix(int n,int kl,int ku,double *A,double *x) {
+
+    // Create the temporary memory that LAPACK needs
+    int info,nrhs=1,*ipiv=new int[n],ldab=2*kl+ku+1;
+
+    // Make call to LAPACK routine
+    dgbsv_(&n,&kl,&ku,&nrhs,A,&ldab,ipiv,x,&n,&info);
+    if(info!=0) {
+        fputs("LAPACK routine failed\n",stderr);
+        exit(1);
+    }
+
+    // Remove temporary memory
+    delete [] ipiv;
 }
 
 /** Finds the eigenvalues of a symmetric matrix A

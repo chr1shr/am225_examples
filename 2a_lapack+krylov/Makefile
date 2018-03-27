@@ -4,7 +4,8 @@ include ../config.mk
 # Lists of files to be built
 objs=file_output.o conj_grad.o poisson.o rbf.o lp_solve.o
 src=$(patsubst %.o,%.cc,$(objs))
-execs=blas_test blas_test2 rbf_test rbf_test2 basic_cg_test rbf_time
+execs=blas_test blas_test2 rbf_test rbf_test2 basic_cg_test rbf_time \
+      banded_test lapack_test
 
 all: $(execs)
 
@@ -33,6 +34,12 @@ blas_test2: blas_test2.cc
 	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 basic_cg_test: basic_cg_test.cc liblinal.a
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
+
+lapack_test: lapack_test.cc liblinal.a
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
+
+banded_test: banded_test.cc liblinal.a
 	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 rbf_test: rbf_test.cc liblinal.a

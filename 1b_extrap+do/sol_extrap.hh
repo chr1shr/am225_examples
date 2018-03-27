@@ -4,15 +4,15 @@
 /** Class for solving an ODE IVP using the extrapolation procedure. */
 class extrap {
     public:
-	/** Whether to use the Gragg method for basic integration, which
-	 * doubles the order of accuracy. */
-	const bool gragg;
+        /** Whether to use the Gragg method for basic integration, which
+         * doubles the order of accuracy. */
+        const bool gragg;
         /** The total number of degrees of freedom in the ODE system. */
         int dof;
         /** A counter for the number of function evaluations. */
         int fcount;
-	/** The maximum allowed value of the j index in the extrapolation
-	 * method. */
+        /** The maximum allowed value of the j index in the extrapolation
+         * method. */
         int max_j;
         /** The current time. */
         double t;
@@ -31,7 +31,7 @@ class extrap {
         void compute_basic(int j,double t);
         double* dq;
         double* k1;
-	double* aq;
+        double* aq;
         int* n_seq;
 };
 

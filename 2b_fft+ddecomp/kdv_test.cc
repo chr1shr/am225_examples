@@ -6,7 +6,7 @@
 const int n=128;
 
 int main() {
-    int i,j,l;
+    int j,l;
     kdv k(n);
     double h=2*M_PI/n;
 

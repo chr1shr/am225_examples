@@ -84,7 +84,7 @@ void extrap::solve_fixed(double duration,int steps,bool output,int j,int k) {
 
                 // Square the nj and njk factors if the Gragg method is being
                 // used
-		        if(gragg) {nj*=nj;njk*=njk;}
+                if(gragg) {nj*=nj;njk*=njk;}
                 double fac=njk/(nj-njk);
 
                 // Use A-N recursion formula

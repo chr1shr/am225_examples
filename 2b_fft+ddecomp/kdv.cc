@@ -14,11 +14,11 @@ void kdv::ff(double t_,double *in,double *out) {
         re=c1[i][0];
         im=c1[i][1];
 
-	// First derivative Fourier spectrum
+        // First derivative Fourier spectrum
         c1[i][0]=-ninv*i*im;
         c1[i][1]=ninv*i*re;
 
-	// Third derivative Fourier spectrum
+        // Third derivative Fourier spectrum
         c2[i][0]=ninv*i*i*i*im;
         c2[i][1]=-ninv*i*i*i*re;
     }
