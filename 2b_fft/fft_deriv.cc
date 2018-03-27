@@ -16,7 +16,7 @@ int main() {
     double *fld=fftw_alloc_real(n),*der=fftw_alloc_real(n);
     for(i=0;i<n;i++) {
         x=i*h;
-        fld[i]=exp(cos(x));
+        fld[i]=exp(-cos(x));
     }
 
     // Allocate memory for complex FFTW output data
@@ -43,13 +43,14 @@ int main() {
         x=i*h;
 
         // Exact derivative
-        eder=-sin(x)*exp(cos(x));
+        eder=sin(x)*exp(-cos(x));
         err=der[i]-eder;
         l2+=err*err;
         printf("%g %g %g %g %g\n",x,fld[i],der[i],eder,err);
     }
     printf("# L2 error: %g\n",sqrt(l2*ninv));
 
+    // Remove memory that was dynamically allocated by FFTW
     fftw_destroy_plan(plan2);
     fftw_destroy_plan(plan1);
     fftw_free(c1);
