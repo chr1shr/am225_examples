@@ -30,7 +30,8 @@ void diffuse::step_forward() {
         switch(type) {
 
             // Update type 0: conventional finite difference
-            case 0: b[j]=((1-2*nu[j])*a[j]+nu[j]*(a[jl]+a[jr]));break;
+            case 0: b[j]=(1-2*nu[j])*a[j]+nu[j]*(a[jl]+a[jr])
+                         +0.25*(nu[jr]-nu[jl])*(a[jr]-a[jl]);break;
 
             // Update type 1: finite volume method
             case 1: b[j]=a[j]+nu[j]*(a[jl]-a[j])+nu[jr]*(a[jr]-a[j]);
@@ -45,15 +46,22 @@ void diffuse::step_forward() {
  * \param[in] filename the name of the file to write to.
  * \param[in] snaps the number of snapshots to save (not including the initial snapshot).
  * \param[in] iters the number of iterations to step the solution forward by
- *                  between snapshots. */
-void diffuse::solve(const char* filename,int snaps,int iters) {
+ *                  between snapshots.
+ * \param[in] type the integration type to use. 0: a finite-difference method,
+ *                 1: a finite-volume method. */
+void diffuse::solve(const char* filename,int snaps,int iters,int type) {
 
     // Allocate memory to store solution snapshots. Integrate the system and
     // store snapshots after fixed time intervals
     double *z=new double[m*(snaps+1)];
     memcpy(z,a,m*sizeof(double));
     for(int i=1;i<=snaps;i++) {
-        for(int k=0;k<iters;k++) step_forward();
+
+        // Perform the explict timesteps
+        if(type==0) for(int k=0;k<iters;k++) step_forward<0>();
+        else for(int k=0;k<iters;k++) step_forward<1>();
+
+        // Store the snapshot
         memcpy(z+i*m,a,m*sizeof(double));
     }
 
@@ -67,9 +75,9 @@ void diffuse::solve(const char* filename,int snaps,int iters) {
     // Print the snapshots, including periodic copies
     // at either end to get a full line over the interval
     // from 0 to 1
-    print_line(-0.5*dx,z+(m-1),snaps);
-    for(int j=0;j<m;j++) print_line((j+0.5)*dx,z+j,snaps);
-    print_line(1+0.5*dx,z,snaps);
+    print_line(fp,-0.5*dx,z+(m-1),snaps);
+    for(int j=0;j<m;j++) print_line(fp,(j+0.5)*dx,z+j,snaps);
+    print_line(fp,1+0.5*dx,z,snaps);
 
     // Delete snapshots and close file
     fclose(fp);
@@ -79,8 +87,16 @@ void diffuse::solve(const char* filename,int snaps,int iters) {
 /** Initializes the solution to be a step function. */
 void diffuse::init_step_function() {
     for(int i=0;i<m;i++) {
-        x=dx*(i+0.5);
+        double x=dx*(i+0.5);
         a[i]=x>0.25&&x<0.75?1:0;
+    }
+}
+
+/** Initializes the solution to be the exponential of a sine wave. */
+void diffuse::init_exp_sine() {
+    for(int i=0;i<m;i++) {
+        double x=dx*(i+0.5);
+        a[i]=exp(sin(2*M_PI*x));
     }
 }
 
@@ -100,7 +116,7 @@ double diffuse::integral() {
  *                  snapshot). */
 void diffuse::print_line(FILE *fp,double x,double *zp,int snaps) {
     fprintf(fp,"%g",x);
-    for(int i=0;i<=snaps;i++) fprintf(" %g",zp[i*m]);
+    for(int i=0;i<=snaps;i++) fprintf(fp," %g",zp[i*m]);
     fputc('\n',fp);
 }
 
@@ -112,7 +128,7 @@ void diffuse::print_line(FILE *fp,double x,double *zp,int snaps) {
  * \param[in] safe_fac a safety factor to multiply the maximally stable
  *                     timestep by. */
 void diffuse::init_nu_array(int type,double safe_fac) {
-    
+
     // Compute the timestep
     double pre=0.5*safe_fac/beta_max();
     dt=pre*dx*dx;
@@ -124,5 +140,5 @@ void diffuse::init_nu_array(int type,double safe_fac) {
 
 // Explicit instantiation of the templated routine for the two different
 // integration types
-template void diffuse::step_forward<0>;
-template void diffuse::step_forward<1>;
+template void diffuse::step_forward<0>();
+template void diffuse::step_forward<1>();

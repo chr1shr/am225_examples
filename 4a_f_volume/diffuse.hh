@@ -24,15 +24,17 @@ class diffuse {
         ~diffuse();
         template<int type>
         void step_forward();
-        void init();
+        void init_step_function();
+        void init_exp_sine();
         void init_nu_array(int type,double safe_fac);
-        void solve(const char* filename,int snaps,int iters);
+        void solve(const char* filename,int snaps,int iters,int type);
+        double integral();
     private:
         void print_line(FILE *fp,double x,double *zp,int snaps);
         /** Calculates the diffusion constant at a position.
          * \param[in] x the position to consider.
          * \return The diffusion constant. */
-        inline double f_beta(double x) {
+        inline double beta(double x) {
             return 0.12+0.08*sin(2*M_PI*x);
         }
         /** The maximum of the beta function. */

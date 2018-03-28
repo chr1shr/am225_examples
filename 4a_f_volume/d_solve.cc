@@ -14,14 +14,14 @@ int main() {
     const double sf=0.2;
 
     // Type of integration. 0: finite-difference method, 1: finite-volume method
-    const int type=0;
+    const int type=1;
 
     // Create the diffusion simulation. Initialize the solution and the nu
     // table.
-    diffuse d0(m);
-    d0.init_step_function();
-    d0.init_nu_array(0,sf);
+    diffuse ds(m);
+    ds.init_step_function();
+    ds.init_nu_array(type,sf);
 
     // Integrate and save the solution snapshots to file
-    d0.solve("diff.out",snaps,iters,0);
+    ds.solve("diff1.out",snaps,iters,type);
 }
