@@ -1,2 +1,3 @@
 conj_grad.o: conj_grad.cc conj_grad.hh blas.h
 cubic_1d_fe.o: cubic_1d_fe.cc cubic_1d_fe.hh conj_grad.hh blas.h
+quadrat.o: quadrat.cc quadrat.hh

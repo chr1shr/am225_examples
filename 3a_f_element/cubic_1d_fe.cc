@@ -88,7 +88,7 @@ void cubic_1d_fe::assemble_b() {
     for(i=0;i<3*n;i++) b[i]=0.;
 
     // Loop over each interval, and compute the contributions
-    // from consider each Lagrange polynomial pair
+    // from each Lagrange polynomial pair
     for(k=0;k<3*n;k+=3) for(i=(k==0?1:0);i<4;i++)
         for(j=0;j<4;j++) b[-1+k+i]-=D[i+4*j]*f[k+j];
 
@@ -106,7 +106,7 @@ void cubic_1d_fe::print(FILE *fp) {
     for(int i=0;i<3*n;i++,xx+=h) fprintf(fp,"%g %g %g %g\n",xx,x[i],b[i],f[i+1]);
 }
 
-/** Prints the solution
+/** Prints the solution.
  * \param[in] filename the name of the file to write to. */
 void cubic_1d_fe::print(const char* filename) {
     FILE *fp=fopen(filename,"w");
@@ -136,4 +136,3 @@ double cubic_1d_fe::l2_norm_mms() {
     l2+=0.5*mms_dsq(2.,x[3*n-1]);
     return sqrt(h*l2);
 }
-
