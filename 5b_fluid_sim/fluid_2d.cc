@@ -8,7 +8,7 @@
  * simulation, dynamically allocates memory for the fields, and calls the
  * routine to initialize the fields.
  * \param[in] (m_,n_) the number of grid points to use in the horizontal and
- *              vertical directions.
+ *                    vertical directions.
  * \param[in] (ax_,bx_) the lower and upper x-coordinate simulation bounds.
  * \param[in] (ay_,by_) the lower and upper y-coordinate simulation bounds.
  * \param[in] visc_ the fluid viscosity.
@@ -38,11 +38,11 @@ fluid_2d::~fluid_2d() {
  * and choosing the timestep.
  * \param[in] ntrace_ the number of tracers.
  * \param[in] dt_pad_ the padding factor for the timestep, which should be
- *              smaller than 1.
+ *                    smaller than 1.
  * \param[in] max_spd a maximum fluid speed from which to estimate the
- *              advection timestep restriction. If a negative value is
- *              supplied, then the advection CFL condition is explicitly
- *              calculated. */
+ *                    advection timestep restriction. If a negative value is
+ *                    supplied, then the advection CFL condition is explicitly
+ *                    calculated. */
 void fluid_2d::initialize(int ntrace_,double dt_pad,double max_spd) {
 
     // Set up the tracers (if any) and initialize the simulation fields
@@ -72,7 +72,7 @@ double fluid_2d::advection_dt() {
 
 /** Chooses the timestep based on the limits from advection and viscosity.
  * \param[in] dt_pad the padding factor for the timestep for the physical
- *             terms, which should be smaller than 1.
+ *                   terms, which should be smaller than 1.
  * \param[in] adv_dt the maximum timestep to resolve the fluid advection.
  * \param[in] verbose whether to print out messages to the screen. */
 void fluid_2d::choose_dt(double dt_pad,double adv_dt,bool verbose) {
