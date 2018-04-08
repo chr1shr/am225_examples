@@ -25,7 +25,7 @@ void kdv::ff(double t_,double *in,double *out) {
     fftw_execute(plan2);
     fftw_execute(plan3);
 
-    for(int i=0;i<n;i++) out[i]=-in[i]*der[i]-0.01*der3[i];
+    for(int i=0;i<n;i++) out[i]=-in[i]*der[i]-a*a*der3[i];
 }
 
 void kdv::init() {

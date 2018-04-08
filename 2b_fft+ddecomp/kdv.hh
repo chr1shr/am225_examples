@@ -10,9 +10,10 @@ class kdv : public rk4 {
     public:
         const int n;
         const int fftn;
+	const double a;
         double* const der;
         double* const der3;
-        kdv(int n_) : rk4(n_), n(n_), fftn(n/2+1),
+        kdv(int n_,double a_) : rk4(n_), n(n_), fftn(n/2+1), a(a_),
             der(fftw_alloc_real(n)),
             der3(fftw_alloc_real(n)),
             c1(fftw_alloc_complex(fftn)),

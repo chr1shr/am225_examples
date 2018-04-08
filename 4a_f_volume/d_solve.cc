@@ -5,10 +5,10 @@
 int main() {
 
     // Number of snapshots to output, and iterations between snapshot
-    const int snaps=40,iters=20000;
+    const int snaps=20,iters=6000;
 
     // Number of gridpoints
-    const int m=512;
+    const int m=256;
 
     // Integration timestep safety factor
     const double sf=0.2;

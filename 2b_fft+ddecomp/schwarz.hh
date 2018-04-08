@@ -30,13 +30,13 @@ class schwarz {
         void solve_multiplicative(bool verbose=true);
         void clear_solution();
         inline void output_solution(const char* filename) {
-            gnuplot_output(filename,v,ma,na,-1,1+grid1.h*xo,-1,1+grid1.h*yo);
+            gnuplot_output(filename,v,ma,na,0,1+grid1.h*xo,0,1+grid1.h*yo);
         }
         inline void output_source(const char* filename) {
-            gnuplot_output(filename,f,ma,na,-1,1+grid1.h*xo,-1,1+grid1.h*yo);
+            gnuplot_output(filename,f,ma,na,0,1+grid1.h*xo,0,1+grid1.h*yo);
         }
         inline void output_residual(const char* filename) {
-            gnuplot_output(filename,r,ma,na,-1,1+grid1.h*xo,-1,1+grid1.h*yo);
+            gnuplot_output(filename,r,ma,na,0,1+grid1.h*xo,0,1+grid1.h*yo);
         }
     private:
         double compute_residual();
