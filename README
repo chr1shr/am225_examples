@@ -74,3 +74,8 @@ radial basis function test case.
 2b_fft+ddecomp - Fast Fourier Transform and domain decomposition examples
 
 3a_f_element - Finite element examples
+
+4a_f_volume - Finite volume examples. Comparison to finite difference methods.
+
+5b_fluid_sim - Simulation of incompressible fluids using Chorin's projection
+method.

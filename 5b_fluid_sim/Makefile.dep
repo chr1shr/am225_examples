@@ -1,0 +1,7 @@
+common.o: common.cc common.hh
+fluid_2d.o: fluid_2d.cc common.hh fluid_2d.hh fields.hh multisetup.hh \
+ ../../tgmg/tgmg.hh ../../tgmg/tgmg_config.hh visco_impl.hh \
+ ../../shared/vec.hh
+multisetup.o: multisetup.cc multisetup.hh fluid_2d.hh fields.hh \
+ ../../tgmg/tgmg.hh ../../tgmg/tgmg_config.hh visco_impl.hh \
+ ../../shared/vec.hh ../../tgmg/tgmg.cc ../../tgmg/tgmg.hh
