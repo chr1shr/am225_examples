@@ -11,14 +11,10 @@ struct field {
     double v;
     /** The pressure. */
     double p;
-    /** The change in horizontal velocity. */
-    double cu;
-    /** The change in vertical velocity. */
-    double cv;
-    inline void update() {
-        u+=cu;
-        v+=cv;
-    }
+    /** The intermediate horizontal velocity. */
+    double us;
+    /** The intermediate vertical velocity. */
+    double vs;
 };
 
 #endif

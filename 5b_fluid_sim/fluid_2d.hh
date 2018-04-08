@@ -6,9 +6,8 @@
 #include <cmath>
 
 #include "fields.hh"
-#include "multisetup.hh"
+#include "mgs_fem.hh"
 #include "tgmg.hh"
-#include "visco_impl.hh"
 
 /** \brief A class to carry out a 2D elasticity simulation. */
 class fluid_2d {
@@ -70,39 +69,53 @@ class fluid_2d {
         /** An array containing the tracer positions. */
         double* const tm;
         /** An array for the source terms used during the algebraic
-         * multigrid solve.*/
+         * multigrid solve. */
         double* const src;
-        /** An array for the finite-element solution. */
-        double* const sfem;
+        /** The regular timestep to be used. */
+        double dt_reg;
         /** The current simulation time. */
         double time;
-        fluid_2d(const int m_,const int n_,const bool x_prd,const bool y_prd,
-             const double ax_,const double bx_,const double ay_,const double by_,
-             const double re_,const double rho_,const double tmult_,
-             const int ntrace_,const bool implicit_visc,const char *filename_);
+        /** The current frame number. */
+        int f_num;
+        /** The files to save to file. */
+        unsigned int fflags;
+        fluid_2d(const int m_,const int n_,const bool x_prd_,const bool y_prd_,
+                 const double ax_,const double bx_,const double ay_,const double by_,
+                 const double visc_,const double rho_,unsigned int fflags_,
+                 const char *filename_);
         ~fluid_2d();
-        void solve(double t_start,double t_end,int frames);
-        void solve(double dt, int frames, bool pres, bool visc, bool force);
+        void solve(double duration,int frames);
         void step_forward(double dt);
         void init_fields();
         void write_files(int k);
-        void write_files(const char *fn, int k);
+        void initialize(int ntrace_,double dt_pad,double max_vel=-1);
+        double advection_dt();
+        void choose_dt(double dt_pad,double adv_dt,bool verbose=true);
         void init_tracers();
         void update_tracers(double dt);
         void output(const char *prefix,const int mode,const int sn,const bool ghost=false);
         void output_tracers(const char *prefix,const int sn);
+        void save_header(double duration,int frames);
+        /** Chooses a timestep size that is the largest value smaller than dt_reg,
+        * such that a given interval length is a perfect multiple of this timestep.
+        * \param[in] interval the interval length to consider.
+        * \param[out] adt the timestep size.
+        * \return The number of timesteps the fit into the interval. */
+        inline int timestep_select(double interval, double &adt) {
+            int l=static_cast<int>(interval/dt_reg)+1;
+            adt=interval/l;
+            return l;
+        }
     private:
         /** An object containing the configuration of the first linear
          * system to be solved using the multigrid method. */
-        msu_fem m_fem;
-        /** The multigrid solver for the first multigrid problem. */
-        tgmg<msu_fem,double,double> m_fem;
+        mgs_fem m_fem;
         void set_boundaries();
         void fem_source_term_conditions();
         double average_pressure();
-        double mymax(double *G, int nib);
-        double mymin(double *G, int nib);
         void copy_pressure();
+        inline void vel_eno2(double &ud,double &vd,double hs,field &f0,field &f1,field &f2,field &f3);
+        inline double eno2(double p0,double p1,double p2,double p3);
         inline double min(double a,double b) {return a<b?a:b;}
         inline double max(double a,double b) {return a>b?a:b;}
         inline void remap_tracer(double &xx,double &yy);

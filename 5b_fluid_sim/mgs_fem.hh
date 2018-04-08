@@ -1,9 +1,9 @@
-#ifndef MSU_FEM_HH
-#define MSU_FEM_HH
+#ifndef MGS_FEM_HH
+#define MGS_FEM_HH
 
 class fluid_2d;
 
-struct msu_fem {
+struct mgs_fem {
     /** The number of gridpoints in the x direction. */
     const int m;
     /** The number of gridpoints in the y direction. */
@@ -28,8 +28,8 @@ struct msu_fem {
     const double hex;
     const double fc;
     double* const z;
-    multisetup2(fluid_2d &f);
-    multisetup2(int m_,int n_,bool x_prd_,bool y_prd_,double dx,double dy,double *z_);
+    mgs_fem(fluid_2d &f);
+    mgs_fem(int m_,int n_,bool x_prd_,bool y_prd_,double dx,double dy,double *z_);
     inline bool not_l(int i) {return x_prd||i>0;}
     inline bool not_r(int i) {return x_prd||i<m-1;}
     inline bool not_lr(int i) {return x_prd||(i>0&&i<m-1);}
@@ -50,34 +50,15 @@ struct msu_fem {
     inline double inv_cc(int i,int ij,double v) {
         return (not_lr(i)?1:2)*(not_du(ij)?1:2)*fm_inv*v;
     }
-    inline double mul_a(int i,int ij) {
-        double *w=z+ij;
-
-        // Since most gridpoints are interior, deal with this case
-        // first
-        if(i>0&&i<m-1&&ij>=m&&ij<mn-m) return fc*(w[-m-1]+w[-m+1]
-                +w[m-1]+w[m+1])+fey*(w[-m]+w[m])+fex*(w[-1]+w[1]);
-
-        // Compute constants and memory shifts for x-periodicity
-        int sl=-1,sr=1;
-        double lmu=1,rmu=1,afex=fex,afey=fey,ans;
-        if(i==0) {
-            sl+=m;
-            if(!x_prd) {lmu=0;afey=hey;}
-        } else if(i==m-1) {
-            sr-=m;
-            if(!x_prd) {rmu=0;afey=hey;}
+    double mul_a(int i,int ij);
+    inline void solve_v_cycle() {
+        if(!mg.solve_v_cycle(tp)) {
+            fputs("V-cycle failed to converge in FEM problem\n",stderr);
+            exit(1);
         }
-
-        // Assemble terms, taking into account y-periodicity
-        if(ij>=m) ans=fc*(lmu*w[-m+sl]+rmu*w[-m+sr])+afey*w[-m];
-        else if(y_prd) ans=fc*(lmu*w[mn-m+sl]+rmu*w[mn-m+sr])+afey*w[mn-m];
-        else {ans=0;afex=hex;}
-        if(ij<mn-m) ans+=fc*(lmu*w[m+sl]+rmu*w[m+sr])+afey*w[m];
-        else if(y_prd) ans+=fc*(lmu*w[m-mn+sl]+rmu*w[m-mn+sr])+afey*w[m-mn];
-        else afex=hex;
-        return ans+afex*(lmu*w[sl]+rmu*w[sr]);
     }
+    tgmg_predict tp;
+    tgmg<mgs_fem,double,double> mg;
 };
 
 #endif

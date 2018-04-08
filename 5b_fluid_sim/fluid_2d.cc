@@ -8,180 +8,241 @@
  * routine to initialize the fields.
  * \param[in] (m_,n_) the number of grid points to use in the horizontal and
  *              vertical directions.
- * \param[in] (x_prd_,y_prd_) the periodicities in the x and y directions.
  * \param[in] (ax_,bx_) the lower and upper x-coordinate simulation bounds.
  * \param[in] (ay_,by_) the lower and upper y-coordinate simulation bounds.
- * \param[in] visc_ the viscosity.
+ * \param[in] visc_ the fluid viscosity.
  * \param[in] rho_ the fluid density.
- * \param[in] tmult_ a multiplier to apply to the default timestep size.
- * \param[in] ntrace_ the number of tracers to use.
  * \param[in] filename_ the filename of the output directory. */
-fluid_2d::fluid_2d(const int m_,const int n_,const bool x_prd_,const bool y_prd_,
-        const double ax_,const double bx_,
-        const double ay_,const double by_,
-        const double visc_,const double rho_,const double tmult_,
-        const int ntrace_,const bool implicit_visc,const char *filename_)
-    : m(m_), n(n_), mn(m_*n_), m_fem(x_prd_?m:m+1), n_fem(y_prd_?n:n+1),
-    ml(m+4), ntrace(ntrace_), x_prd(x_prd_), y_prd(y_prd_),
+fluid_2d::fluid_2d(const int m_,const int n_,const double ax_,const double bx_,
+        const double ay_,const double by_,const double visc_,
+        const double rho_,unsigned int fflags_,const char *filename_)
+    : m(m_), n(n_), mn(m_*n_), me(m+1), ne(n+1), ml(m+4), ntrace(0),
     ax(ax_), ay(ay_), bx(bx_), by(by_), dx((bx_-ax_)/m_), dy((by_-ay_)/n_),
-    xsp(1/dx), ysp(1/dy), xxsp(xsp*xsp), yysp(ysp*ysp), visc(visc_), rho(rho_),
-    rhoinv(1/rho), tmult(tmult_), filename(filename_),
+    xsp(1/dx), ysp(1/dy), xxsp(xsp*xsp), yysp(ysp*ysp), visc(visc_),
+    rho(rho_), rhoinv(1/rho), filename(filename_),
     fbase(new field[ml*(n+4)]), fm(fbase+2*ml+2),
-    tm(new double[ntrace<<1]), src(new double[m_fem*n_fem]),
-    s_fem(new double[m_fem*n_fem]),
-    m_fem(*this), mg1(m_fem,src,s_fem),
-    buf(new float[m>123?m+5:128]) {
-
-    // Initialize the multigrid hierarchies
-    mg1.setup();mg1.clear_z();
-
-    // Initialize the tracers
-    if(ntrace>0) init_tracers();
-}
+    src(new double[me*ne]), time(0.), f_num(0), fflags(fflags_),
+    ms_fem(*this), buf(new float[m>123?m+5:128]) {}
 
 /** The class destructor frees the dynamically allocated memory. */
 fluid_2d::~fluid_2d() {
     delete [] buf;
-    delete [] sfem;delete [] src;
-    delete [] tm;delete [] fbase;
+    delete [] src;
+    delete [] fbase;
+}
+
+/** Initializes the simulation, setting up the tracers and simulation fields,
+ * and choosing the timestep.
+ * \param[in] ntrace_ the number of tracers.
+ * \param[in] dt_pad_ the padding factor for the timestep, which should be
+ *              smaller than 1.
+ * \param[in] max_spd a maximum fluid speed from which to estimate the
+ *              advection timestep restriction. If a negative value is
+ *              supplied, then the advection CFL condition is explicitly
+ *              calculated. */
+void fluid_2d::initialize(int ntrace_,double dt_pad,double max_spd) {
+
+    // Set up the tracers (if any) and initialize the simulation fields
+    if((ntrace=ntrace_)>0) init_tracers();
+    init_fields();
+
+    // Compute the timestep, based on the restrictions from the advection
+    // and velocity, plus a padding factor
+    choose_dt(dt_pad,max_spd<=0?advection_dt():(dx>dy?dx:dy)/max_spd);
+}
+
+/** Computes the maximum timestep that can resolve the fluid advection, based
+ * on the CFL condition.
+ * \return The maximum timestep. */
+double fluid_2d::advection_dt() {
+    double adv_dt=0;
+#pragma omp parallel for reduction(max:adv_dt)
+    for(int j=0;j<n;j++) {
+        double t;
+        for(field *fp=fm+ml*j,*fe=fp+m;fp<fe;fp++) {
+            t=fp->cfl(xsp,ysp);
+            if(t>adv_dt) adv_dt=t;
+        }
+    }
+    return adv_dt==0?std::numeric_limits<double>::max():1./adv_dt;
+}
+
+/** Chooses the timestep based on the limits from advection and viscosity.
+ * \param[in] dt_pad the padding factor for the timestep for the physical
+ *             terms, which should be smaller than 1.
+ * \param[in] adv_dt the maximum timestep to resolve the fluid advection.
+ * \param[in] verbose whether to print out messages to the screen. */
+void fluid_2d::choose_dt(double dt_pad,double adv_dt,bool verbose) {
+
+    // Calculate the viscous timestep restriction
+    double vis_dt=0.5*rho/(visc*(xxsp+yysp));
+    int ca;
+
+    // Choose the minimum of the two timestep restrictions
+    if(adv_dt<vis_dt) {ca=0;dt_reg=adv_dt;}
+    else {ca=1;dt_reg=vis_dt;}
+    dt_reg*=dt_pad;
+
+    // Print information if requested
+    if(verbose) {
+        const char mno[]="", myes[]=" <-- use this";
+        printf("# Advection dt       : %g%s\n"
+               "# Viscous dt         : %g%s\n"
+               "# Padding factor     : %g\n"
+               "# Minimum dt         : %g\n",
+               adv_dt,ca==0?myes:mno,vis_dt,ca==1?myes:mno,dt_pad,dt_reg);
+    }
 }
 
 /** Initializes the simulation fields. */
 void fluid_2d::init_fields() {
 
+    // Loop over the primary grid and set the velocity and pressure
 #pragma omp parallel for
     for(int j=0;j<n;j++) {
-        double y=ay+dy*(j+0.5);
-        double xx,yy;
+        double y=ay+dy*(j+0.5),yy=y+0.5;
         field *fp=fm+ml*j;
         for(int i=0;i<m;i++) {
-            double x=ax+dx*(i+0.5);
-            fp->u = sin(M_PI*x)*cos(M_PI*y);
-            fp->v = -cos(M_PI*x)*sin(M_PI*y);
-            fp->p=0;
-            fp++;
+            double x=ax+dx*(i+0.5),xx=x+0.5;
+            fp->u=4*exp(-20*(x*x+y*y));
+            fp->v=exp(-20*(x*x+y*y))-5*exp(-30*(xx*xx+yy*yy));
+            (fp++)->p=0;
         }
-        double x=ax+dx*(m+0.5);
+        fp->p=0;
     }
+
+    // Set the final line of the cell-cornered pressure field
+    field *fp=fm+ml*n,*fe=fp+me;
+    while(fp<fe) (fp++)->p=0;
 
     // Now that the primary grid points are set up, initialize the ghost
     // points according to the boundary conditions
     set_boundaries();
 }
 
-/** Carries out the simulation for a specified duration, periodically saving
- * the output.
- * \param[in] duration the simulation duration
+/** Carries out the simulation for a specified time interval using the direct
+ * simulation method, periodically saving the output.
+ * \param[in] duration the simulation duration.
  * \param[in] frames the number of frames to save. */
-void fluid_2d::solve(double t_start,double t_end,int frames) {
-    time=t_start;
-    double time_interval=(t_end-t_start)/frames,t0,t1,t2;
-    //const double dt=dx*dx*tmult;
-    const double dt=dx*tmult;
-    int l=int(time_interval/dt)+1;
-    double adt=time_interval/l;
+void fluid_2d::solve(double duration,int frames) {
+    double t0,t1,t2,adt;
+    int l=timestep_select(duration/frames,adt);
 
-    // Save header file
-    char *bufc=((char*) buf);
-    sprintf(bufc,"%s/header",filename);
-    FILE *outf=safe_fopen(bufc,"w");
-    fprintf(outf,"%g %g %d\n",t_start,t_end,frames);
-    fclose(outf);
-
-    // Output the initial fields and record initial time
-    set_boundaries();
-    write_files(0);
-    puts("# Output frame 0");
+    // Save header file, output the initial fields and record the initial wall
+    // clock time
+    save_header(duration,frames);
+    if(f_num==0) write_files(0), puts("# Output frame 0");
     t0=wtime();
 
+    // Loop over the output frames
     for(int k=1;k<=frames;k++) {
 
-        for(int qq=0;qq<l;qq++) step_forward(adt);
-        //time+=time_interval; //BUG
+        // Perform the simulation steps
+        for(int j=0;j<l;j++) step_forward(adt);
 
         // Output the fields
         t1=wtime();
-        write_files(k);
+        write_files(k+f_num);
 
         // Print diagnostic information
         t2=wtime();
-        printf("# Output frame %d [%d, %.8g s, %.8g s]\n",k,l,t1-t0,t2-t1);
+        printf("# Output frame %d [%d, %.8g s, %.8g s] {MAC %.2f, FEM %.2f}\n",
+               k,l,t1-t0,t2-t1,ms_mac.tp.avg_iters(),ms_fem.tp.avg_iters());
         t0=t2;
     }
+    f_num+=frames;
+}
+
+/** Carries out the simulation for a specified time interval using the direct
+ * simulation method, periodically saving the output.
+ * \param[in] duration the simulation duration.
+ * \param[in] frames the number of frames to save. */
+void fluid_2d::solve(double duration,int frames) {
+    double t0,t1,t2,adt;
+    int l=timestep_select(duration/frames,adt);
+
+    // Save header file, output the initial fields and record the initial wall
+    // clock time
+    save_header(duration,frames);
+    if(f_num==0) write_files(0), puts("# Output frame 0");
+    t0=wtime();
+
+    // Loop over the output frames
+    for(int k=1;k<=frames;k++) {
+
+        // Perform the simulation steps
+        for(int j=0;j<l;j++) step_forward(adt);
+
+        // Output the fields
+        t1=wtime();
+        write_files(k+f_num);
+
+        // Print diagnostic information
+        t2=wtime();
+        printf("# Output frame %d [%d, %.8g s, %.8g s] {FEM %.2f}\n",
+               k,l,t1-t0,t2-t1,ms_fem.tp.avg_iters());
+        t0=t2;
+    }
+    f_num+=frames;
 }
 
 /** Steps the simulation fields forward.
  * \param[in] dt the time step to use. */
 void fluid_2d::step_forward(double dt) {
     int j;
-
-    // Update the simulation time, and move the tracers
+    double hx=dt*xsp,hy=dt*ysp,hxx=rhoinv*visc*xxsp*dt,
+           hyy=rhoinv*visc*yysp*dt;
     update_tracers(dt);
 
 #pragma omp parallel for
     for(j=0;j<n;j++) for(i=0;i<m;i++) {
+        field *fp=fm+(m*j+i),*flp=fp+(i==0?m-1:-1),*frp=fp+(i==m-1?1-m:1);
+        field &f=*fp,&fl=*flp,&fr=*frp,&fd=fp[-m],&fu=fp[m];
 
-    }
+        uc>0?eno2(ux,vx,hx,fr,f,fl,fp[i<=1?m-2:-2])
+            :eno2(ux,vx,-hx,fl,f,fr,fp[i>=m-2?2-m:2]);
+        vc>0?eno2(ux,vx,hx,fr,f,fl,fp[i<=1?m-2:-2])
+            :eno2(ux,vx,-hx,fl,f,fr,fp[i>=m-2?2-m:2]);
 
-#pragma omp parallel for
-    for(field *fp=fm;fp<fm+mn;fp++) fp->update();
-
-    // compute intermediate velocities at the next time step
-#pragma omp parallel for
-    for(j=0;j<n;j++) for(int i=0;i<m;i++) {
-
-        // Create references to the fields in the neighboring gridpoints
-        field *fp=fm+(ml*j+i),&f=*fp,&fr=fp[1],&fu=fp[ml];
-
-                if (disable_nonlinear) {
-                  // Disable nonlinear terms
-          f.c0=f.u+dt*f.c0;
-          f.c1=f.v+dt*f.c1;
-                }
-                else {
-          f.c0=f.u+dt*(-0.5*(xsp*(fr.ul+f.ul)*(fr.ul-f.ul)+ysp*(fu.vd+f.vd)*(fu.ud-f.ud))+f.c0);
-          f.c1=f.v+dt*(-0.5*(xsp*(fr.ul+f.ul)*(fr.vl-f.vl)+ysp*(fu.vd+f.vd)*(fu.vd-f.vd))+f.c1);
-                }
+        uyy=yysp*(fp[-ml].u-2*fp->u+fp[ml].u);
+        vyy=yysp*(fp[-ml].v-2*fp->v+fp[ml].v);
+        uxx=xxsp*(fp[-1].u-2*fp->u+fp[1].u);
+        vxx=xxsp*(fp[-1].v-2*fp->v+fp[1].v);
     }
 
     // Calculate the source term for the finite-element projection, doing
     // some preliminary copying to simplify periodicity calculations
-        fem_source_term_conditions();
-        double hx=0.5*dx/dt,hy=0.5*dy/dt;
-    #pragma omp parallel for
-        for(j=0;j<n_fem;j++) {
-            double *srp=src+j*m_fem;
-            for(field *fp=fm+j*ml,*fe=fp+m_fem;fp<fe;fp++) {
-                *(srp++)=hx*(fp[-ml-1].c0+fp[-1].c0-fp[-ml].c0-fp->c0)
-                    +hy*(fp[-ml-1].c1-fp[-1].c1+fp[-ml].c1-fp->c1);
-            }
-        }
-        // Solve the finite-element problem, and copy the pressure back into
-        // the main data structure, subtracting off the mean, and taking into
-        // account the boundary conditions
-        mg2.solve_v_cycle();
-        copy_pressure();
+    fem_source_term_conditions();
+    double sx=0.5*dx/dt,hy=0.5*dy/dt;
+#pragma omp parallel for
+    for(j=0;j<n_fem;j++) {
+        double *srp=src+j*m_fem;
+        for(field *fp=fm+j*ml,*fe=fp+m_fem;fp<fe;fp++)
+            *(srp++)=sx*(fp[-ml-1].us+fp[-1].us-fp[-ml].us-fp->us)
+                    +sy*(fp[-ml-1].vs-fp[-1].vs+fp[-ml].vs-fp->vs);
+    }
 
-    // Update u and v based on c0, c1, and the computed pressure
+    // Solve the finite-element problem, and copy the pressure back into
+    // the main data structure, subtracting off the mean, and taking into
+    // account the boundary conditions
+    mg2.solve_v_cycle();
+    copy_pressure();
+
+    // Update u and v based on us, vs, and the computed pressure
 #pragma omp parallel for
     for(j=0;j<n;j++) {
         field *fp=fm+j*ml,*fe=fp+m;
         while(fp<fe) {
-            if(pres){
-                fp->u=fp->c0-0.5*dt*rhoinv*xsp*(fp[ml+1].p+fp[1].p-fp[ml].p-fp->p);
-                fp->v=fp->c1-0.5*dt*rhoinv*ysp*(fp[ml+1].p-fp[1].p+fp[ml].p-fp->p);
-            }
-            else{
-                fp->u = fp->c0;
-                fp->v = fp->c1;
-            }
+            fp->u=fp->us-0.5*dt*rhoinv*xsp*(fp[ml+1].p+fp[1].p-fp[ml].p-fp->p);
+            fp->v=fp->vs-0.5*dt*rhoinv*ysp*(fp[ml+1].p-fp[1].p+fp[ml].p-fp->p);
             fp++;
         }
     }
+
     // Reset the ghost points according to the boundary conditions
     set_boundaries();
 
-        // Increment time at end of step
+    // Increment time at end of step
     time+=dt;
 }
 
@@ -208,24 +269,34 @@ void fluid_2d::copy_pressure() {
 double fluid_2d::average_pressure() {
     double pavg=0;
 
-#pragma omp parallel for
+#pragma omp parallel for reduction(*:pavg)
     for(int j=0;j<n_fem;j++) {
         double *sop=sfem+j*m_fem,*soe=sop+(m_fem-1);
         double prow=*(sop++)*(x_prd?1:0.5);
         while(sop<soe) prow+=*(sop++);
         prow+=*sop*(x_prd?1:0.5);
         if(!y_prd&&(j==0||j==n)) prow*=0.5;
-#pragma omp atomic
         pavg+=prow;
     }
     return pavg*(1./mn);
 }
 
-void fluid_2d::centered_diff(field *fp,double &uxx,double &uyy,double &vxx,double &vyy) {
-    uyy=yysp*(fp[-ml].u-2*fp->u+fp[ml].u);
-    vyy=yysp*(fp[-ml].v-2*fp->v+fp[ml].v);
-    uxx=xxsp*(fp[-1].u-2*fp->u+fp[1].u);
-    vxx=xxsp*(fp[-1].v-2*fp->v+fp[1].v);
+/** Calculates one-sided derivatives of the velocity field using the second-order ENO2
+ * scheme, applying the shift to the X terms.
+ * \param[out] (ud,vd) the computed ENO2 derivatives.
+ * \param[in] hs a multiplier to apply to the computed fields.
+ * \param[in] (f0,f1,f2,f3) the fields to compute the derivative with. */
+inline void fluid_2d::vel_eno2(double &ud,double &vd,double hs,field &f0,field &f1,field &f2,field &f3) {
+    ud=hs*eno2(f0.U,f1.u,f2.u,f3.u);
+    vd=hs*eno2(f0.v,f1.v,f2.v,f3.v);
+}
+
+/** Calculates the ENO derivative using a sequence of values at
+ * four gridpoints.
+ * \param[in] (p0,p1,p2,p3) the sequence of values to use.
+ * \return The computed derivative. */
+inline double fluid_2d::eno2(double p0,double p1,double p2,double p3) {
+    return fabs(p0-2*p1+p2)>fabs(p1-2*p2+p3)?3*p1-4*p2+p3:p0-p2;
 }
 
 /** Sets the fields in the ghost regions according to the boundary conditions.
@@ -315,27 +386,25 @@ void fluid_2d::init_tracers() {
 * velocity.
 * \param[in] dt the timestep to use. */
 void fluid_2d::update_tracers(double dt) {
-    int i,j,i_prd,j_prd;
-    double x,y,*tp=tm,*te=tm+(ntrace<<1);
-    field *fp;
-    while(tp<te) {
+    int i,j;
+    double x,y;
+    for(double *tp=tm,$te=tm+(ntrace<<1);tp<te;tp+=2) {
 
         // Find which grid cell the tracer is in
-        //x=(*tp-ax)*xsp+0.5;y=(tp[1]-ay)*ysp+0.5; //potential bug
-        x=(*tp-ax)*xsp-0.5;y=(tp[1]-ay)*ysp-0.5;
-        i=floor(x);
-        j=floor(y);
+        x=(*tp-ax)*xsp+0.5;y=(tp[1]-ay)*ysp+0.5;
+        i=int(x)-1;
+        j=int(y)-1;
+        if(i<-1) i=-1;else if(i>m-1) i=m-1;
+        if(j<-1) j=-1;else if(j>n-1) i=n-1;
 
         // Compute the tracer's fractional position with the grid cell
         x-=i;y-=j;
 
         // Compute tracer's new position
-        i_prd=x_prd?my_mod(i,m):i;
-        j_prd=y_prd?my_mod(j,n):j;
-        fp=fm+(i_prd+ml*j_prd);
-        *(tp++)+=dt*((1-y)*(fp->u*(1-x)+fp[1].u*x)+y*(fp[ml].u*(1-x)+fp[ml+1].u*x));
-        *(tp++)+=dt*((1-y)*(fp->v*(1-x)+fp[1].v*x)+y*(fp[ml].v*(1-x)+fp[ml+1].v*x));
-
+        field *fp=fm+(i+ml*j);
+        *tp+=dt*((1-y)*(fp->u*(1-x)+fp[1].u*x)+y*(fp[ml].u*(1-x)+fp[ml+1].u*x));
+        tp[1]+=dt*((1-y)*(fp->v*(1-x)+fp[1].v*x)+y*(fp[ml].v*(1-x)+fp[ml+1].v*x));
+        remap_tracer(*tp,tp[1]);
     }
 }
 
@@ -344,7 +413,6 @@ void fluid_2d::update_tracers(double dt) {
  * \param[in,out] (xx,yy) the tracer position, which is updated in situ. */
 inline void fluid_2d::remap_tracer(double &xx,double &yy) {
     const double xfac=1./(bx-ax),yfac=1./(by-ay);
-
     if(x_prd) xx-=(bx-ax)*floor((xx-ax)*xfac);
     if(y_prd) yy-=(by-ay)*floor((yy-ay)*yfac);
 }
@@ -362,67 +430,21 @@ void fluid_2d::output_tracers(const char *prefix,const int sn) {
     int j,tbatch=(ntrace<<1)/128,tres=(ntrace<<1)%128;
     float *fp,*fe=buf+128;
     double *tp=tm,*te=tm+(ntrace<<1);
-
-        double temp_x, temp_y;
     for(j=0;j<tbatch;j++) {
         fp=buf;
-        while(fp<fe) {
-                  temp_x = *(tp++);
-                  temp_y = *(tp++);
-
-                  remap_tracer(temp_x,temp_y);
-
-                  *(fp++) = temp_x;
-                  *(fp++) = temp_y;
-
-                }
+        while(fp<fe) *(fp++)=*(tp++);
         fwrite(buf,sizeof(float),128,outf);
     }
 
     // Output the remaining tracer positions, if any
     if(tres>0) {
         fp=buf;
-        do {
-                  temp_x = *(tp++);
-                  temp_y = *(tp++);
-
-                  remap_tracer(temp_x,temp_y);
-
-                  *(fp++) = temp_x;
-                  *(fp++) = temp_y;
-
-                } while(tp<te);
+        do {*(fp++)=*(tp++);} while(tp<te);
         fwrite(buf,sizeof(float),tres,outf);
     }
 
     // Close the file
     fclose(outf);
-}
-
-/** Writes a selection of simulation fields to the output directory.
- * \param[in] k the frame number to append to the output. */
-void fluid_2d::write_files(const char *filename, int k) {
-    char *bufc=((char*) buf);
-    sprintf(bufc,"%s/u.%d",filename, k);
-    FILE *fu = safe_fopen(bufc, "w");
-    sprintf(bufc,"%s/v.%d",filename, k);
-    FILE *fv = safe_fopen(bufc, "w");
-    sprintf(bufc, "%s/p.%d", filename, k);
-    FILE *fp = safe_fopen(bufc, "w");
-    for(int j=0;j<n;j++){
-        for(int i=0;i<m;i++){
-            field *f = fm+j*ml+i;
-            fprintf(fu, "%.8g ", f->u);
-            fprintf(fv, "%.8g ", f->v);
-            fprintf(fp, "%.8g ", f->p);
-        }
-        fprintf(fu, "\n");
-        fprintf(fv, "\n");
-        fprintf(fp, "\n");
-    }
-    fclose(fu);
-    fclose(fv);
-    fclose(fp);
 }
 
 /** Writes a selection of simulation fields to the output directory.
@@ -433,6 +455,17 @@ void fluid_2d::write_files(int k) {
     if(fflags&2) output("v",1,k);
     if(fflags&4) output("p",2,k);
     output_tracers("trace",k);
+}
+
+/** Saves the header file.
+ * \param[in] duration the simulation duration.
+ * \param[in] frames the number of frames to save. */
+void fluid_2d::save_header(double duration, int frames) {
+    char *bufc=reinterpret_cast<char*>(buf);
+    sprintf(bufc,"%s/header",filename);
+    FILE *outf=safe_fopen(bufc,f_num==0?"w":"a");
+    fprintf(outf,"%g %g %d\n",time,time+duration,frames);
+    fclose(outf);
 }
 
 /** Outputs a 2D array to a file in a format that can be read by Gnuplot.
