@@ -1,4 +1,5 @@
 #include <cstring>
+#include <limits>
 
 #include "common.hh"
 #include "fluid_2d.hh"
@@ -367,8 +368,8 @@ void fluid_2d::update_tracers(double dt) {
         x=(*tp-ax)*xsp+0.5;y=(tp[1]-ay)*ysp+0.5;
         i=int(x)-1;
         j=int(y)-1;
-        if(i<-1) i=-1;else if(i>m-1) i=m-1;
-        if(j<-1) j=-1;else if(j>n-1) i=n-1;
+        if(i<-1) i=-1;else if(i>=m) i=m-1;
+        if(j<-1) j=-1;else if(j>=n) i=n-1;
 
         // Compute the tracer's fractional position with the grid cell
         x-=i;y-=j;
