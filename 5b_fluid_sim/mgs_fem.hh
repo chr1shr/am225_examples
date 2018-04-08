@@ -18,17 +18,31 @@ struct mgs_fem {
     const bool y_prd;
     /** The mode to use for the Gauss-Seidel smoothing. (0=default) */
     static const char gs_mode=0;
+    /** The ratio of vertical and horizontal grid spacings. */
+    const double dydx;
+    /** The ratio of horizontal and vertical grid spacings. */
+    const double dxdy;
+    /** The central term in the finite element stencil. */
+    const double fm;
+    /** The reciprocal of the central term in the finite element stencil,
+     * needed during the Gauss--Seidel smoothing steps. */
+    const double fm_inv;
+    /** The vertical term in the finite element stencil. */
+    const double fey;
+    /** Half the vertical term in the finite element stencil, required
+     * at boundary gridpoints. */
+    const double hey;
+    /** The horizontal term in the finite element stencil. */
+    const double fex;
+    /** Half the horizontal term in the finite element stencil, required
+     * at boundary gridpoints. */
+    const double hex;
+    /** The diagonal corner term in the finite element stencil. */
+    const double fc;
     /** Threshold on L_2 norm of residual to terminate the multigrid solve. */
     const double acc;
-    const double dydx;
-    const double dxdy;
-    const double fm;
-    const double fm_inv;
-    const double fey;
-    const double hey;
-    const double fex;
-    const double hex;
-    const double fc;
+    /** The array holding the solution of the linear system (i.e. the fluid
+     * pressure). */
     double* const z;
     mgs_fem(fluid_2d &f);
     ~mgs_fem() {
@@ -55,13 +69,17 @@ struct mgs_fem {
         return (not_lr(i)?1:2)*(not_du(ij)?1:2)*fm_inv*v;
     }
     double mul_a(int i,int ij);
+    /** Solves the linear system using multigrid V-cycles. */
     inline void solve_v_cycle() {
         if(!mg.solve_v_cycle(tp)) {
             fputs("V-cycle failed to converge in FEM problem\n",stderr);
             exit(1);
         }
     }
+    /** A helper class for the multigrid library that holds information for
+     * predicting the number of V-cycles that are required. */
     tgmg_predict tp;
+    /** The multigrid solver. */
     tgmg<mgs_fem,double,double> mg;
 };
 

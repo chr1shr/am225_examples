@@ -1,6 +1,6 @@
 common.o: common.cc common.hh
 fluid_2d.o: fluid_2d.cc common.hh fluid_2d.hh fields.hh mgs_fem.hh \
  ../tgmg/tgmg.hh ../tgmg/tgmg_config.hh ../tgmg/tgmg_predict.hh
-mgs_fem.o: mgs_fem.cc mgs_fem.hh fluid_2d.hh fields.hh ../tgmg/tgmg.hh \
- ../tgmg/tgmg_config.hh ../tgmg/tgmg_predict.hh ../tgmg/tgmg.cc \
+mgs_fem.o: mgs_fem.cc mgs_fem.hh ../tgmg/tgmg.hh ../tgmg/tgmg_config.hh \
+ ../tgmg/tgmg_predict.hh fluid_2d.hh fields.hh ../tgmg/tgmg.cc \
  ../tgmg/tgmg.hh

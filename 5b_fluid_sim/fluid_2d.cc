@@ -162,25 +162,34 @@ void fluid_2d::step_forward(double dt) {
     int j;
     double hx=dt*xsp,hy=dt*ysp,hxx=rhoinv*visc*xxsp*dt,
            hyy=rhoinv*visc*yysp*dt;
+
+    // Perform an explicit Euler step of the tracer positions using the
+    // bilinear interpolation of the velocity field
     update_tracers(dt);
 
 #pragma omp parallel for
     for(j=0;j<n;j++) for(int i=0;i<m;i++) {
         field *fp=fm+(ml*j+i),&f=*fp;
 
+        // Compute the second derivatives that are needed to evaluate the
+        // viscous stresses
         double ux,vx,uy,vy,&uc=f.u,&vc=f.v,
                uyy=hyy*(fp[-ml].u-2*uc+fp[ml].u),
                vyy=hyy*(fp[-ml].v-2*vc+fp[ml].v),
                uxx=hxx*(fp[-1].u-2*uc+fp[1].u),
                vxx=hxx*(fp[-1].v-2*vc+fp[1].v);
 
+        // Compute advective terms using the second-order ENO scheme
         uc>0?vel_eno2(ux,vx,hx,fp[1],f,fp[-1],fp[-2])
             :vel_eno2(ux,vx,-hx,fp[-1],f,fp[1],fp[2]);
         vc>0?vel_eno2(uy,vy,hy,fp[ml],f,fp[-ml],fp[-2*ml])
             :vel_eno2(uy,vy,-hy,fp[-ml],f,fp[ml],fp[2*ml]);
 
+        // Compute the intermediate velocity using advection and viscosity.
+        // Note that the terms ux, uyy, etc. are already scaled by the correct
+        // constants.
         f.us=f.u-uc*ux-vc*uy+uxx+uyy;
-        f.vs=f.u-uc*vx-vc*vy+vxx+vyy;
+        f.vs=f.v-uc*vx-vc*vy+vxx+vyy;
     }
 
     // Calculate the source term for the finite-element projection, doing

@@ -9,7 +9,7 @@
 #include "mgs_fem.hh"
 #include "tgmg.hh"
 
-/** \brief A class to carry out a 2D elasticity simulation. */
+/** A class to carry out a 2D incompressible fluid simulation. */
 class fluid_2d {
     public:
         /** The number of grid cells in the horizontal direction. */

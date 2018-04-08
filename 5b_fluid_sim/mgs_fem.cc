@@ -6,15 +6,20 @@
  * class.
  * \param[in] f a reference to the parent fluid_2d class. */
 mgs_fem::mgs_fem(fluid_2d &f) : m(f.m_fem), n(f.n_fem), mn(m*n),
-    x_prd(f.x_prd), y_prd(f.y_prd), acc(tgmg_accuracy(fm,1e4)),
-    dydx(f.dy/f.dx), dxdy(f.dx/f.dy), fm(4./3.*(dxdy+dydx)), fm_inv(1.0/fm),
-    fey(1./3.*(-2*dxdy+dydx)), hey(0.5*fey), fex(1./3.*(-2*dydx+dxdy)),
-    hex(0.5*fex), fc(-1./6.*(dxdy+dydx)), z(new double[mn]),
+    x_prd(f.x_prd), y_prd(f.y_prd), dydx(f.dy/f.dx), dxdy(f.dx/f.dy),
+    fm(4./3.*(dxdy+dydx)), fm_inv(1.0/fm), fey(1./3.*(-2*dxdy+dydx)),
+    hey(0.5*fey), fex(1./3.*(-2*dydx+dxdy)), hex(0.5*fex),
+    fc(-1./6.*(dxdy+dydx)), acc(tgmg_accuracy(fm,1e4)), z(new double[mn]),
     mg(*this,f.src,z) {
     mg.setup();
     mg.clear_z();
 }
 
+/** Evaluates a single entry of the linear matrix system multiplied by the
+ * current vector (held in the z array).
+ * \param[in] i the horizontal index of the entry to consider.
+ * \param[in] ij the index of the entry to consider.
+ * \return The component of the matrix-vector product. */
 double mgs_fem::mul_a(int i,int ij) {
     double *w=z+ij;
 
