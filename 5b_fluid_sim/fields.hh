@@ -15,6 +15,10 @@ struct field {
     double us;
     /** The intermediate vertical velocity. */
     double vs;
+    inline double cfl(double xsp,double ysp) {
+        double uc=fabs(u)*xsp,vc=fabs(v)*ysp;
+        return uc>vc?uc:vc;
+    }
 };
 
 #endif

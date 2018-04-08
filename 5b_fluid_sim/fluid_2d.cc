@@ -13,19 +13,21 @@
  * \param[in] visc_ the fluid viscosity.
  * \param[in] rho_ the fluid density.
  * \param[in] filename_ the filename of the output directory. */
-fluid_2d::fluid_2d(const int m_,const int n_,const double ax_,const double bx_,
+fluid_2d::fluid_2d(const int m_,const int n_,const bool x_prd_,
+        const bool y_prd_,const double ax_,const double bx_,
         const double ay_,const double by_,const double visc_,
         const double rho_,unsigned int fflags_,const char *filename_)
-    : m(m_), n(n_), mn(m_*n_), me(m+1), ne(n+1), ml(m+4), ntrace(0),
-    ax(ax_), ay(ay_), bx(bx_), by(by_), dx((bx_-ax_)/m_), dy((by_-ay_)/n_),
-    xsp(1/dx), ysp(1/dy), xxsp(xsp*xsp), yysp(ysp*ysp), visc(visc_),
-    rho(rho_), rhoinv(1/rho), filename(filename_),
-    fbase(new field[ml*(n+4)]), fm(fbase+2*ml+2),
-    src(new double[me*ne]), time(0.), f_num(0), fflags(fflags_),
-    ms_fem(*this), buf(new float[m>123?m+5:128]) {}
+    : m(m_), n(n_), mn(m_*n_), m_fem(x_prd_?m:m+1), n_fem(y_prd_?n:n+1),
+    ml(m+4), ntrace(0), x_prd(x_prd_), y_prd(y_prd_), ax(ax_), ay(ay_),
+    bx(bx_), by(by_), dx((bx_-ax_)/m_), dy((by_-ay_)/n_), xsp(1/dx), ysp(1/dy),
+    xxsp(xsp*xsp), yysp(ysp*ysp), visc(visc_), rho(rho_), rhoinv(1/rho),
+    filename(filename_), fbase(new field[ml*(n+4)]), fm(fbase+2*ml+2),
+    src(new double[m_fem*n_fem]), tm(NULL), time(0.), f_num(0),
+    fflags(fflags_), ms_fem(*this), buf(new float[m>123?m+5:128]) {}
 
 /** The class destructor frees the dynamically allocated memory. */
 fluid_2d::~fluid_2d() {
+    if(ntrace>0) delete [] tm;
     delete [] buf;
     delete [] src;
     delete [] fbase;
@@ -112,45 +114,12 @@ void fluid_2d::init_fields() {
     }
 
     // Set the final line of the cell-cornered pressure field
-    field *fp=fm+ml*n,*fe=fp+me;
+    field *fp=fm+ml*n,*fe=fp+m+1;
     while(fp<fe) (fp++)->p=0;
 
     // Now that the primary grid points are set up, initialize the ghost
     // points according to the boundary conditions
     set_boundaries();
-}
-
-/** Carries out the simulation for a specified time interval using the direct
- * simulation method, periodically saving the output.
- * \param[in] duration the simulation duration.
- * \param[in] frames the number of frames to save. */
-void fluid_2d::solve(double duration,int frames) {
-    double t0,t1,t2,adt;
-    int l=timestep_select(duration/frames,adt);
-
-    // Save header file, output the initial fields and record the initial wall
-    // clock time
-    save_header(duration,frames);
-    if(f_num==0) write_files(0), puts("# Output frame 0");
-    t0=wtime();
-
-    // Loop over the output frames
-    for(int k=1;k<=frames;k++) {
-
-        // Perform the simulation steps
-        for(int j=0;j<l;j++) step_forward(adt);
-
-        // Output the fields
-        t1=wtime();
-        write_files(k+f_num);
-
-        // Print diagnostic information
-        t2=wtime();
-        printf("# Output frame %d [%d, %.8g s, %.8g s] {MAC %.2f, FEM %.2f}\n",
-               k,l,t1-t0,t2-t1,ms_mac.tp.avg_iters(),ms_fem.tp.avg_iters());
-        t0=t2;
-    }
-    f_num+=frames;
 }
 
 /** Carries out the simulation for a specified time interval using the direct
@@ -195,25 +164,28 @@ void fluid_2d::step_forward(double dt) {
     update_tracers(dt);
 
 #pragma omp parallel for
-    for(j=0;j<n;j++) for(i=0;i<m;i++) {
-        field *fp=fm+(m*j+i),*flp=fp+(i==0?m-1:-1),*frp=fp+(i==m-1?1-m:1);
-        field &f=*fp,&fl=*flp,&fr=*frp,&fd=fp[-m],&fu=fp[m];
+    for(j=0;j<n;j++) for(int i=0;i<m;i++) {
+        field *fp=fm+(ml*j+i),&f=*fp;
 
-        uc>0?eno2(ux,vx,hx,fr,f,fl,fp[i<=1?m-2:-2])
-            :eno2(ux,vx,-hx,fl,f,fr,fp[i>=m-2?2-m:2]);
-        vc>0?eno2(ux,vx,hx,fr,f,fl,fp[i<=1?m-2:-2])
-            :eno2(ux,vx,-hx,fl,f,fr,fp[i>=m-2?2-m:2]);
+        double ux,vx,uy,vy,&uc=f.u,&vc=f.v,
+               uyy=hyy*(fp[-ml].u-2*uc+fp[ml].u),
+               vyy=hyy*(fp[-ml].v-2*vc+fp[ml].v),
+               uxx=hxx*(fp[-1].u-2*uc+fp[1].u),
+               vxx=hxx*(fp[-1].v-2*vc+fp[1].v);
 
-        uyy=yysp*(fp[-ml].u-2*fp->u+fp[ml].u);
-        vyy=yysp*(fp[-ml].v-2*fp->v+fp[ml].v);
-        uxx=xxsp*(fp[-1].u-2*fp->u+fp[1].u);
-        vxx=xxsp*(fp[-1].v-2*fp->v+fp[1].v);
+        uc>0?vel_eno2(ux,vx,hx,fp[1],f,fp[-1],fp[-2])
+            :vel_eno2(ux,vx,-hx,fp[-1],f,fp[1],fp[2]);
+        vc>0?vel_eno2(uy,vy,hy,fp[ml],f,fp[-ml],fp[-2*ml])
+            :vel_eno2(uy,vy,-hy,fp[-ml],f,fp[ml],fp[2*ml]);
+
+        f.us=f.u-uc*ux-vc*uy+uxx+uyy;
+        f.vs=f.u-uc*vx-vc*vy+vxx+vyy;
     }
 
     // Calculate the source term for the finite-element projection, doing
     // some preliminary copying to simplify periodicity calculations
     fem_source_term_conditions();
-    double sx=0.5*dx/dt,hy=0.5*dy/dt;
+    double sx=0.5*dx/dt,sy=0.5*dy/dt;
 #pragma omp parallel for
     for(j=0;j<n_fem;j++) {
         double *srp=src+j*m_fem;
@@ -225,7 +197,7 @@ void fluid_2d::step_forward(double dt) {
     // Solve the finite-element problem, and copy the pressure back into
     // the main data structure, subtracting off the mean, and taking into
     // account the boundary conditions
-    mg2.solve_v_cycle();
+    ms_fem.solve_v_cycle();
     copy_pressure();
 
     // Update u and v based on us, vs, and the computed pressure
@@ -249,7 +221,7 @@ void fluid_2d::step_forward(double dt) {
 /** Copies the pressure back into the main data structure, subtracting off the
  * mean, and taking into account the boundary conditions. */
 void fluid_2d::copy_pressure() {
-    double pavg=average_pressure();
+    double pavg=average_pressure(),*sfem=ms_fem.z;
 
 #pragma omp parallel for
     for(int j=0;j<n+1;j++) {
@@ -267,7 +239,7 @@ void fluid_2d::copy_pressure() {
  * finite-element method.
  * \return The pressure. */
 double fluid_2d::average_pressure() {
-    double pavg=0;
+    double pavg=0,*sfem=ms_fem.z;
 
 #pragma omp parallel for reduction(*:pavg)
     for(int j=0;j<n_fem;j++) {
@@ -287,7 +259,7 @@ double fluid_2d::average_pressure() {
  * \param[in] hs a multiplier to apply to the computed fields.
  * \param[in] (f0,f1,f2,f3) the fields to compute the derivative with. */
 inline void fluid_2d::vel_eno2(double &ud,double &vd,double hs,field &f0,field &f1,field &f2,field &f3) {
-    ud=hs*eno2(f0.U,f1.u,f2.u,f3.u);
+    ud=hs*eno2(f0.u,f1.u,f2.u,f3.u);
     vd=hs*eno2(f0.v,f1.v,f2.v,f3.v);
 }
 
@@ -347,13 +319,13 @@ void fluid_2d::fem_source_term_conditions() {
     int xl;
     if(x_prd) {
         for(field *fp=fm,*fe=fm+n*ml;fp<fe;fp+=ml) {
-            fp[-1].c0=fp[m-1].c0;fp[-1].c1=fp[m-1].c1;
+            fp[-1].us=fp[m-1].us;fp[-1].vs=fp[m-1].vs;
         }
         xl=m;
     } else {
         for(field *fp=fm,*fe=fm+n*ml;fp<fe;fp+=ml) {
-            fp[-1].c0=fp[-1].c1=0;
-            fp[m].c0=fp[m].c1=0;
+            fp[-1].us=fp[-1].vs=0;
+            fp[m].us=fp[m].vs=0;
         }
         xl=m+1;
     }
@@ -362,18 +334,19 @@ void fluid_2d::fem_source_term_conditions() {
     const int g=n*ml;
     if(y_prd) {
         for(field *fp=fm-1,*fe=fm+xl;fp<fe;fp++) {
-            fp[-ml].c0=fp[g-ml].c0;fp[-ml].c1=fp[g-ml].c1;
+            fp[-ml].us=fp[g-ml].us;fp[-ml].vs=fp[g-ml].vs;
         }
     } else {
         for(field *fp=fm-1,*fe=fm+xl;fp<fe;fp++) {
-            fp[-ml].c0=fp[-ml].c1=0;
-            fp[g].c0=fp[g].c1=0;
+            fp[-ml].us=fp[-ml].vs=0;
+            fp[g].us=fp[g].vs=0;
         }
     }
 }
 
 /** Sets up the fluid tracers by initializing them at random positions. */
 void fluid_2d::init_tracers() {
+    tm=new double[ntrace<<1];
     for(double *tp=tm;tp<tm+(ntrace<<1);) {
 
         // Create a random position vector within the simulation region
@@ -388,7 +361,7 @@ void fluid_2d::init_tracers() {
 void fluid_2d::update_tracers(double dt) {
     int i,j;
     double x,y;
-    for(double *tp=tm,$te=tm+(ntrace<<1);tp<te;tp+=2) {
+    for(double *tp=tm,*te=tm+(ntrace<<1);tp<te;tp+=2) {
 
         // Find which grid cell the tracer is in
         x=(*tp-ax)*xsp+0.5;y=(tp[1]-ay)*ysp+0.5;
@@ -420,6 +393,7 @@ inline void fluid_2d::remap_tracer(double &xx,double &yy) {
 /** Outputs the tracer positions in a binary format that can be read by
  * Gnuplot. */
 void fluid_2d::output_tracers(const char *prefix,const int sn) {
+    if(ntrace==0) return;
 
     // Assemble the output filename and open the output file
     char *bufc=((char*) buf);
@@ -493,8 +467,7 @@ void fluid_2d::output(const char *prefix,const int mode,const int sn,const bool 
     fwrite(buf,sizeof(float),l+1,outf);
 
     // Output the field values to the file
-    //field *fr=ghost?fbase:fm;
-    field *fr=ghost?fbase:err; //Plot error
+    field *fr=ghost?fbase:fm;
     for(j=0;j<l;j++,fr+=ml) {
         field *fp=fr;
         *buf=ay+(j+disp)*dy;bp=buf+1;

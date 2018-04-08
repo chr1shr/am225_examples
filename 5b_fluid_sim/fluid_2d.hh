@@ -27,7 +27,7 @@ class fluid_2d {
         /** The memory step length, taking into account ghost point allocation. */
         const int ml;
         /** The number of tracers. */
-        const int ntrace;
+        int ntrace;
         /** The periodicity in the x direction. */
         const bool x_prd;
         /** The periodicity in the y direction. */
@@ -58,19 +58,17 @@ class fluid_2d {
         const double rho;
         /** The inverse density. */
         const double rhoinv;
-        /** A multiplier to apply to the default timestep size. */
-        const double tmult;
         /** The filename of the output directory. */
         const char *filename;
         /** An array containing the simulation fields. */
         field* const fbase;
         /** A pointer to the (0,0) grid cell in the field array. */
         field* const fm;
-        /** An array containing the tracer positions. */
-        double* const tm;
         /** An array for the source terms used during the algebraic
          * multigrid solve. */
         double* const src;
+        /** An array containing the tracer positions. */
+        double* tm;
         /** The regular timestep to be used. */
         double dt_reg;
         /** The current simulation time. */
@@ -109,7 +107,7 @@ class fluid_2d {
     private:
         /** An object containing the configuration of the first linear
          * system to be solved using the multigrid method. */
-        mgs_fem m_fem;
+        mgs_fem ms_fem;
         void set_boundaries();
         void fem_source_term_conditions();
         double average_pressure();

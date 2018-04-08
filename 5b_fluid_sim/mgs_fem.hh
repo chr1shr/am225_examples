@@ -3,6 +3,8 @@
 
 class fluid_2d;
 
+#include "tgmg.hh"
+
 struct mgs_fem {
     /** The number of gridpoints in the x direction. */
     const int m;
@@ -29,7 +31,9 @@ struct mgs_fem {
     const double fc;
     double* const z;
     mgs_fem(fluid_2d &f);
-    mgs_fem(int m_,int n_,bool x_prd_,bool y_prd_,double dx,double dy,double *z_);
+    ~mgs_fem() {
+        delete [] z;
+    }
     inline bool not_l(int i) {return x_prd||i>0;}
     inline bool not_r(int i) {return x_prd||i<m-1;}
     inline bool not_lr(int i) {return x_prd||(i>0&&i<m-1);}
