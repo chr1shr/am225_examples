@@ -18,16 +18,26 @@ class ho_transport {
         double *a;
         /** The secondary grid for storing the solution. */
         double *b;
+        /** An array for the slopes sigma multiplied by the grid spacing dx. */
+        double *sdx;
         ho_transport(int m_,double A_);
         ~ho_transport();
         void lax_wendroff(double dt);
         void beam_warming(double dt);
+        void slope_limiter(double dt,int type);
+        template<int type>
+        void sl_setup();
         void init_step_function();
         void init_exp_sine();
-        void init_nu_array(int type,double safe_fac);
         void solve(const char* filename,int snaps,double duration,double safe_fac,int type);
         double integral();
     private:
+        inline double minmod(double a,double b) {
+            return a*b>0?(fabs(a)<fabs(b)?a:b):0;
+        }
+        inline double maxmod(double a,double b) {
+            return a*b>0?(fabs(a)<fabs(b)?b:a):0;
+        }
         void print_line(FILE *fp,double x,double *zp,int snaps);
 };
 

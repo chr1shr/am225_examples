@@ -3,20 +3,22 @@
 
 #include "ho_transport.hh"
 
-/** Initializes the class for solving the diffusion equation on the periodic
- * unit interval, using a spatially dependent diffusion constant.
+/** Initializes the class for solving the transport equation on the periodic
+ * unit interval, using high-order and high-resolution methods.
  * \param[in] m_ the number of gridpoints to use.
  * \param[in] A_ the advection velocity. */
 ho_transport::ho_transport(int m_,double A_) : m(m_), dx(1./m), A(A_),
-    a(new double[m]), b(new double[m]) {}
+    a(new double[m]), b(new double[m]), sdx(new double[m]) {}
 
 /** The class destructor frees the dynamically allocated memory. */
 ho_transport::~ho_transport() {
+    delete [] sdx;
     delete [] b;
     delete [] a;
 }
 
-/** Performs one explicit timestep of the Lax-Wendroff method. */
+/** Performs one explicit timestep of the Lax-Wendroff method.
+ * \param[in] dt the timestep to use. */
 void ho_transport::lax_wendroff(double dt) {
     double f=A/dx*dt,
            sl=0.5*f*(1+f),sc=1-f*f,sr=0.5*f*(-1+f);
@@ -35,7 +37,8 @@ void ho_transport::lax_wendroff(double dt) {
     double *c=a;a=b;b=c;
 }
 
-/** Performs one explicit timestep of the Beam-Warming method. */
+/** Performs one explicit timestep of the Beam-Warming method.
+ * \param[in] dt the timestep to use. */
 void ho_transport::beam_warming(double dt) {
     double f=A/dx*dt,
            sll=-0.5*f+0.5*f*f,sl=f*(2-f),sc=1-1.5*f+0.5*f*f;
@@ -54,14 +57,53 @@ void ho_transport::beam_warming(double dt) {
     double *c=a;a=b;b=c;
 }
 
-/** Solves the diffusion equation, storing snapshots of the solution to a file.
+/** Performs one explicit timestep using a slope limited method.
+ * \param[in] dt the timestep to use.
+ * \param[in] type the integration type to use. 2:minmod, 3:superbee. */
+void ho_transport::slope_limiter(double dt,int type) {
+
+    // Set up slopes using either the minmod or superbee slope limiting
+    // procedure
+    type==2?sl_setup<2>():sl_setup<3>();
+
+    double f=A/dx*dt;
+    for(int j=0;j<m;j++) {
+
+        // Compute index on left, taking into account periodicity
+        int jl=j==0?m-1+j:j-1;
+
+        // Perform update
+        b[j]=(1-f)*a[j]+f*a[jl]-0.5*f*(1-f)*(sdx[j]-sdx[jl]);
+    }
+
+    // Swap pointers so that b becomes the primary array
+    double *c=a;a=b;b=c;
+}
+
+/** Constructs slopes according to the minmod slope limiting procedure. */
+template<int type>
+void ho_transport::sl_setup() {
+    for(int j=0;j<m;j++) {
+
+        // Compute indices on left and right, taking into account periodicity
+        int jl=j==0?m-1+j:j-1,
+            jr=j==m-1?1-m+j:j+1;
+
+        // Perform update
+        sdx[j]=type==2?minmod(a[j]-a[jl],a[jr]-a[j])
+                      :maxmod(minmod(a[jr]-a[j],2*(a[j]-a[jl])),
+                              minmod(2*(a[jr]-a[j]),a[j]-a[jl]));
+    }
+}
+
+/** Solves the transport equation, storing snapshots of the solution to a file.
  * \param[in] filename the name of the file to write to.
  * \param[in] snaps the number of snapshots to save (not including the initial snapshot).
  * \param[in] duration the number of iterations to step the solution forward by
  *                     between snapshots.
  * \param[in] safe_fac a safety factor to apply to the CFL timestep restriction.
  * \param[in] type the integration type to use. 0: Lax-Wendroff,
- *                 1: Beam-Warming. */
+ *                 1: Beam-Warming, 2: minmod, 3: superbee */
 void ho_transport::solve(const char* filename,int snaps,double duration,double safe_fac,int type) {
 
     // Compute the timestep and number of iterations
@@ -78,7 +120,9 @@ void ho_transport::solve(const char* filename,int snaps,double duration,double s
         // Perform the explict timesteps
         switch(type) {
             case 0: for(int k=0;k<iters;k++) lax_wendroff(dt);break;
-            case 1: for(int k=0;k<iters;k++) beam_warming(dt);
+            case 1: for(int k=0;k<iters;k++) beam_warming(dt);break;
+            case 2:
+            case 3: for(int k=0;k<iters;k++) slope_limiter(dt,type);
         }
 
         // Store the snapshot
@@ -139,3 +183,7 @@ void ho_transport::print_line(FILE *fp,double x,double *zp,int snaps) {
     for(int i=0;i<=snaps;i++) fprintf(fp," %g",zp[i*m]);
     fputc('\n',fp);
 }
+
+// Explicit instantiation
+template void ho_transport::sl_setup<2>();
+template void ho_transport::sl_setup<3>();
