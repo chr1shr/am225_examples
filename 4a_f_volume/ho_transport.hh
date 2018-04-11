@@ -18,7 +18,7 @@ class ho_transport {
         double *a;
         /** The secondary grid for storing the solution. */
         double *b;
-        /** An array for the slopes sigma multiplied by the grid spacing dx. */
+        /** An array for the slopes, sigma, multiplied by the grid spacing dx. */
         double *sdx;
         ho_transport(int m_,double A_);
         ~ho_transport();

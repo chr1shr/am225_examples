@@ -45,7 +45,7 @@ void ho_transport::beam_warming(double dt) {
 
     for(int j=0;j<m;j++) {
 
-        // Compute indices on left and right, taking into account periodicity
+        // Compute two indices to the left, taking into account periodicity
         int jl=j==0?m-1+j:j-1,
             jll=j<=1?m-2+j:j-2;
 
@@ -57,7 +57,7 @@ void ho_transport::beam_warming(double dt) {
     double *c=a;a=b;b=c;
 }
 
-/** Performs one explicit timestep using a slope limited method.
+/** Performs one explicit timestep using a slope-limited method.
  * \param[in] dt the timestep to use.
  * \param[in] type the integration type to use. 2:minmod, 3:superbee. */
 void ho_transport::slope_limiter(double dt,int type) {
@@ -80,7 +80,8 @@ void ho_transport::slope_limiter(double dt,int type) {
     double *c=a;a=b;b=c;
 }
 
-/** Constructs slopes according to the minmod slope limiting procedure. */
+/** Fills the (sigma*dx) slope array using a limiting procedure. If type=2, use
+ * the minmod method. If type=3, use the superbee method. */
 template<int type>
 void ho_transport::sl_setup() {
     for(int j=0;j<m;j++) {
@@ -89,7 +90,7 @@ void ho_transport::sl_setup() {
         int jl=j==0?m-1+j:j-1,
             jr=j==m-1?1-m+j:j+1;
 
-        // Perform update
+        // Apply the slope limiter
         sdx[j]=type==2?minmod(a[j]-a[jl],a[jr]-a[j])
                       :maxmod(minmod(a[jr]-a[j],2*(a[j]-a[jl])),
                               minmod(2*(a[jr]-a[j]),a[j]-a[jl]));
@@ -98,12 +99,13 @@ void ho_transport::sl_setup() {
 
 /** Solves the transport equation, storing snapshots of the solution to a file.
  * \param[in] filename the name of the file to write to.
- * \param[in] snaps the number of snapshots to save (not including the initial snapshot).
+ * \param[in] snaps the number of snapshots to save (not including the initial
+ *                  snapshot).
  * \param[in] duration the number of iterations to step the solution forward by
  *                     between snapshots.
  * \param[in] safe_fac a safety factor to apply to the CFL timestep restriction.
  * \param[in] type the integration type to use. 0: Lax-Wendroff,
- *                 1: Beam-Warming, 2: minmod, 3: superbee */
+ *                 1: Beam-Warming, 2: minmod, 3: superbee. */
 void ho_transport::solve(const char* filename,int snaps,double duration,double safe_fac,int type) {
 
     // Compute the timestep and number of iterations
@@ -136,9 +138,8 @@ void ho_transport::solve(const char* filename,int snaps,double duration,double s
         exit(1);
     }
 
-    // Print the snapshots, including periodic copies
-    // at either end to get a full line over the interval
-    // from 0 to 1
+    // Print the snapshots, including periodic copies at either end to get a
+    // full line over the interval from 0 to 1
     print_line(fp,-0.5*dx,z+(m-1),snaps);
     for(int j=0;j<m;j++) print_line(fp,(j+0.5)*dx,z+j,snaps);
     print_line(fp,1+0.5*dx,z,snaps);
