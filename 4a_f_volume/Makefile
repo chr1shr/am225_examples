@@ -2,9 +2,9 @@
 include ../config.mk
 
 # Lists of files to be built
-objs=diffuse.o ho_transport.o
+objs=diffuse.o ho_transport.o traffic.o
 src=$(patsubst %.o,%.cc,$(objs))
-execs=d_solve d_cons_test ho_solve
+execs=d_solve d_cons_test ho_solve t_solve
 
 all: $(execs)
 
@@ -29,6 +29,9 @@ d_solve: d_solve.cc $(objs)
 	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 d_cons_test: d_cons_test.cc $(objs)
+	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
+
+t_solve: t_solve.cc $(objs)
 	$(cxx) $(cflags) -o $@ $^ $(lp_lflags)
 
 .PHONY: clean depend
