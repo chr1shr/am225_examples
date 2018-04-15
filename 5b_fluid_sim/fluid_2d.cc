@@ -160,7 +160,7 @@ void fluid_2d::solve(double duration,int frames) {
  * \param[in] dt the time step to use. */
 void fluid_2d::step_forward(double dt) {
     int j;
-    double hx=dt*xsp,hy=dt*ysp,hxx=rhoinv*visc*xxsp*dt,
+    double hx=0.5*dt*xsp,hy=0.5*dt*ysp,hxx=rhoinv*visc*xxsp*dt,
            hyy=rhoinv*visc*yysp*dt;
 
     // Perform an explicit Euler step of the tracer positions using the
@@ -273,8 +273,8 @@ inline void fluid_2d::vel_eno2(double &ud,double &vd,double hs,field &f0,field &
     vd=hs*eno2(f0.v,f1.v,f2.v,f3.v);
 }
 
-/** Calculates the ENO derivative using a sequence of values at
- * four gridpoints.
+/** Calculates the ENO derivative using a sequence of values at four
+ * gridpoints.
  * \param[in] (p0,p1,p2,p3) the sequence of values to use.
  * \return The computed derivative. */
 inline double fluid_2d::eno2(double p0,double p1,double p2,double p3) {
