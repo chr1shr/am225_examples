@@ -49,7 +49,7 @@ void traffic::godunov(double dt) {
  *                  snapshot).
  * \param[in] duration the number of iterations to step the solution forward by
  *                     between snapshots.
- * \param[in] safe_fac a safety factor to apply to the CFL timestep restriction. */ 
+ * \param[in] safe_fac a safety factor to apply to the CFL timestep restriction. */
 void traffic::solve(const char* filename,int snaps,double duration,double safe_fac) {
 
     // Compute the timestep and number of iterations

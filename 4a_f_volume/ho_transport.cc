@@ -4,7 +4,7 @@
 #include "ho_transport.hh"
 
 /** Initializes the class for solving the transport equation on the periodic
- * unit interval, using high-order and high-resolution methods.
+ * unit interval, using a variety of high-order and high-resolution methods.
  * \param[in] m_ the number of gridpoints to use.
  * \param[in] A_ the advection velocity. */
 ho_transport::ho_transport(int m_,double A_) : m(m_), dx(1./m), A(A_),
@@ -15,6 +15,22 @@ ho_transport::~ho_transport() {
     delete [] sdx;
     delete [] b;
     delete [] a;
+}
+
+/** Performs one step of the first-order Godunov method using a piecewise
+ * constant reconstruction. This method is equivalent to a one-sided
+ * first-order finite difference update, and is provided for comparison
+ * purposes.
+ * \param[in] dt the timestep to use. */
+void ho_transport::godunov(double dt) {
+    double f=A/dx*dt;
+
+    // Perform one-sided update, taking into account periodicity
+    for(int j=0;j<m;j++)
+        b[j]=a[j]+f*(a[j==0?m-1+j:j-1]-a[j]);
+
+    // Swap pointers so that b becomes the primary array
+    double *c=a;a=b;b=c;
 }
 
 /** Performs one explicit timestep of the Lax-Wendroff method.
@@ -64,7 +80,7 @@ void ho_transport::slope_limiter(double dt,int type) {
 
     // Set up slopes using either the minmod or superbee slope limiting
     // procedure
-    type==2?sl_setup<2>():sl_setup<3>();
+    type==3?sl_setup<3>():sl_setup<4>();
 
     double f=A/dx*dt;
     for(int j=0;j<m;j++) {
@@ -80,8 +96,8 @@ void ho_transport::slope_limiter(double dt,int type) {
     double *c=a;a=b;b=c;
 }
 
-/** Fills the (sigma*dx) slope array using a limiting procedure. If type=2, use
- * the minmod method. If type=3, use the superbee method. */
+/** Fills the (sigma*dx) slope array using a limiting procedure. If type=3, use
+ * the minmod method. If type=4, use the superbee method. */
 template<int type>
 void ho_transport::sl_setup() {
     for(int j=0;j<m;j++) {
@@ -91,10 +107,39 @@ void ho_transport::sl_setup() {
             jr=j==m-1?1-m+j:j+1;
 
         // Apply the slope limiter
-        sdx[j]=type==2?minmod(a[j]-a[jl],a[jr]-a[j])
+        sdx[j]=type==3?minmod(a[j]-a[jl],a[jr]-a[j])
                       :maxmod(minmod(a[jr]-a[j],2*(a[j]-a[jl])),
                               minmod(2*(a[jr]-a[j]),a[j]-a[jl]));
     }
+}
+
+/** Solves the transport equation using the second-order essentially
+ * non-oscillatory (ENO) method. Note this is not a finite-volume method (and
+ * is not conservative) but it still does a good job at dealing with sharp
+ * features in a solution.
+ * \param[in] dt the timestep to use. */
+void ho_transport::step_eno2(double dt) {
+    double f=0.5*A/dx*dt;
+    for(int j=0;j<m;j++) {
+
+        // Compute required indices, taking into account periodicity
+        int jl=j==0?m-1+j:j-1,jll=j<=1?m-2+j:j-2,
+            jr=j==m-1?1-m+j:j+1;
+
+        // Perform update
+        b[j]=a[j]-f*eno2(a[jr],a[j],a[jl],a[jll]);
+    }
+
+    // Swap pointers so that b becomes the primary array
+    double *c=a;a=b;b=c;
+}
+
+/** Calculates the ENO derivative using a sequence of values at four
+ * gridpoints.
+ * \param[in] (p0,p1,p2,p3) the sequence of values to use.
+ * \return The computed derivative. */
+inline double ho_transport::eno2(double p0,double p1,double p2,double p3) {
+    return fabs(p0-2*p1+p2)>fabs(p1-2*p2+p3)?3*p1-4*p2+p3:p0-p2;
 }
 
 /** Solves the transport equation, storing snapshots of the solution to a file.
@@ -121,10 +166,12 @@ void ho_transport::solve(const char* filename,int snaps,double duration,double s
 
         // Perform the explict timesteps
         switch(type) {
-            case 0: for(int k=0;k<iters;k++) lax_wendroff(dt);break;
-            case 1: for(int k=0;k<iters;k++) beam_warming(dt);break;
-            case 2:
-            case 3: for(int k=0;k<iters;k++) slope_limiter(dt,type);
+            case 0: for(int k=0;k<iters;k++) godunov(dt);break;
+            case 1: for(int k=0;k<iters;k++) lax_wendroff(dt);break;
+            case 2: for(int k=0;k<iters;k++) beam_warming(dt);break;
+            case 3:
+            case 4: for(int k=0;k<iters;k++) slope_limiter(dt,type);break;
+            case 5: for(int k=0;k<iters;k++) step_eno2(dt);
         }
 
         // Store the snapshot
@@ -153,7 +200,7 @@ void ho_transport::solve(const char* filename,int snaps,double duration,double s
 void ho_transport::init_step_function() {
     for(int i=0;i<m;i++) {
         double x=dx*(i+0.5);
-        a[i]=x>0.25&&x<0.75?1:0;
+        a[i]=x>0.1&&x<0.6?1:0;
     }
 }
 
@@ -186,5 +233,5 @@ void ho_transport::print_line(FILE *fp,double x,double *zp,int snaps) {
 }
 
 // Explicit instantiation
-template void ho_transport::sl_setup<2>();
 template void ho_transport::sl_setup<3>();
+template void ho_transport::sl_setup<4>();
