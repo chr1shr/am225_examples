@@ -15,10 +15,16 @@ struct field {
     double us;
     /** The intermediate vertical velocity. */
     double vs;
+    inline void prd_bc(field &f) {
+        u=f.u;v=f.v;
+    }
+    inline void no_slip(field &f) {
+        u=-f.u;v=-f.v;
+    }
     /** Computes the maximum allowable timestep based on the CFL restriction
      * from the velocity stored in this class.
      * \param[in] (xsp,ysp) the horizontal and vertical grid spacings.
-     * \return The maximum allowable timestep. */
+     * \return The reciprocal of the maximum allowable timestep. */
     inline double cfl(double xsp,double ysp) {
         double uc=fabs(u)*xsp,vc=fabs(v)*ysp;
         return uc>vc?uc:vc;

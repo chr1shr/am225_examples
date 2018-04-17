@@ -288,17 +288,17 @@ void fluid_2d::set_boundaries() {
     // Set left and right ghost values
     if(x_prd) {
         for(field *fp=fm,*fe=fm+n*ml;fp<fe;fp+=ml) {
-            fp[-2].u=fp[m-2].u;fp[-2].v=fp[m-2].v;
-            fp[-1].u=fp[m-1].u;fp[-1].v=fp[m-1].v;
-            fp[m].u=fp->u;fp[m].v=fp->v;
-            fp[m+1].u=fp[1].u;fp[m+1].v=fp[1].v;
+            fp[-2].prd_bc(fp[m-2]);
+            fp[-1].prd_bc(fp[m-1]);
+            fp[m].prd_bc(*fp);
+            fp[m+1].prd_bc(fp[1]);
         }
     } else {
         for(field *fp=fm,*fe=fm+n*ml;fp<fe;fp+=ml) {
-            fp[-2].u=-fp[1].u;fp[-2].v=-fp[1].v;
-            fp[-1].u=-fp->u;fp[-1].v=-fp->v;
-            fp[m].u=-fp[m-1].u;fp[m].v=-fp[m-1].v;
-            fp[m+1].u=-fp[m-2].u;fp[m+1].v=-fp[m-2].v;
+            fp[-2].no_slip(fp[1]);
+            fp[-1].no_slip(*fp);
+            fp[m].no_slip(fp[m-1]);
+            fp[m+1].no_slip(fp[m-2]);
         }
     }
 
@@ -306,17 +306,17 @@ void fluid_2d::set_boundaries() {
     const int tl=2*ml,g=n*ml;
     if(y_prd) {
         for(field *fp=fm-2,*fe=fm+m+2;fp<fe;fp++) {
-            fp[-tl].u=fp[g-tl].u;fp[-tl].v=fp[g-tl].v;
-            fp[-ml].u=fp[g-ml].u;fp[-ml].v=fp[g-ml].v;
-            fp[g].u=fp->u;fp[g].v=fp->v;
-            fp[g+ml].u=fp[ml].u;fp[g+ml].v=fp[ml].v;
+            fp[-tl].prd_bc(fp[g-tl]);
+            fp[-ml].prd_bc(fp[g-ml]);
+            fp[g].prd_bc(*fp);
+            fp[g+ml].prd_bc(fp[ml]);
         }
     } else {
         for(field *fp=fm-2,*fe=fm+m+2;fp<fe;fp++) {
-            fp[-tl].u=-fp[ml].u;fp[-tl].v=-fp[ml].v;
-            fp[-ml].u=-fp->u;fp[-ml].v=-fp->v;
-            fp[g].u=-fp[g-ml].u;fp[g].v=-fp[g-ml].v;
-            fp[g+ml].u=-fp[g-tl].u;fp[g+ml].v=-fp[g-tl].v;
+            fp[-tl].no_slip(fp[ml]);
+            fp[-ml].no_slip(*fp);
+            fp[g].no_slip(fp[g-ml]);
+            fp[g+ml].no_slip(fp[g-tl]);
         }
     }
 }
@@ -434,7 +434,6 @@ void fluid_2d::output_tracers(const char *prefix,const int sn) {
 /** Writes a selection of simulation fields to the output directory.
  * \param[in] k the frame number to append to the output. */
 void fluid_2d::write_files(int k) {
-    const int fflags=7;
     if(fflags&1) output("u",0,k);
     if(fflags&2) output("v",1,k);
     if(fflags&4) output("p",2,k);
