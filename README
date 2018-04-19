@@ -80,5 +80,7 @@ radial basis function test case.
 5a_fluid_sim - Simulation of incompressible fluids using Chorin's projection
 method.
 
+5b_lsm_fmm - Level set method and the fast marching method examples.
+
 tgmg - An prototype 2D templated multigrid library developed by the Rycroft
 group, which is required by the incompressible fluid simulation.
