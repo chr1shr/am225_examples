@@ -15,8 +15,8 @@ int main() {
 
     // Create the traffic simulation, and set up the initial condition
     traffic tr(m,1.0);
- //   tr.init_exp_sine();
-    tr.init_step_function();
+    tr.init_exp_sine();
+ //   tr.init_step_function();
 
     // Integrate and save the solution snapshots to file
     tr.solve("traf.out",snaps,1.0,sf);
