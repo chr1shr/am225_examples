@@ -9,6 +9,7 @@
  * routine to initialize the fields.
  * \param[in] (m_,n_) the number of grid points to use in the horizontal and
  *                    vertical directions.
+ * \param[in] (x_prd_,y_prd_) the periodicity in the x and y directions.
  * \param[in] (ax_,bx_) the lower and upper x-coordinate simulation bounds.
  * \param[in] (ay_,by_) the lower and upper y-coordinate simulation bounds.
  * \param[in] visc_ the fluid viscosity.
