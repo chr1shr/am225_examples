@@ -77,7 +77,7 @@ radial basis function test case.
 
 4a_f_volume - Finite volume examples. Comparison to finite difference methods.
 
-5b_fluid_sim - Simulation of incompressible fluids using Chorin's projection
+5a_fluid_sim - Simulation of incompressible fluids using Chorin's projection
 method.
 
 tgmg - An prototype 2D templated multigrid library developed by the Rycroft
