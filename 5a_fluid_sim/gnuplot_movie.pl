@@ -148,7 +148,7 @@ unless ($opt_w) {
         system "ffmpeg -r 30 -y -i $odir/fr_%4d.png -vb 20M $mf.mpg"
     } elsif($uname=~/Darwin/) {
         unlink "$mf.mov";
-        system "qt_export --sequencerate=30 $odir/fr_0001.png --loadsettings=../misc/qt --replacefile $mf.mov";
+        system "qt_export --sequencerate=30 $odir/fr_0001.png --loadsettings=../misc/qtprefs/qt --replacefile $mf.mov";
     }
 }
 
