@@ -1,0 +1,26 @@
+Miscellaneous files
+===================
+This directory contains several auxiliary files that support the main example
+programs:
+
+- It contains a small configuration file "qtprefs/qt" that is used by the
+  Gnuplot movie-making scripts, to configure the qt_tools utility on the
+  Mac.
+
+- It contains an example program for making PNG images using the libpng
+  library (http://www.libpng.org/pub/png/libpng.html).
+
+PNG output example
+==================
+The file write_png.cc contains a function write_png that takes a 2D array of
+(R,G,B) color values and creates a PNG image from them, using the libpng
+library. The libpng library is a available as a standard package in most
+package distribution systems (e.g. MacPorts on the Mac, Cygwin on Windows).
+
+To compile the programs in this directory, you should first install the libpng
+library, and ensure that your config.mk file in the top level directory
+defines the variables png_iflags and png_lflags. The templates in the config
+directory already do this.
+
+The directory contains a file called wpng_example.cc that uses the write_png
+function to make a PNG image, which is saved to "test.png".
