@@ -42,7 +42,7 @@ void fmm::init_fields() {
 
 /** Initializes the heap. */
 void fmm::init_heap() {
-    w=0;
+    w=1;
     for(int j=0;j<n;j++) {
         for(int i=0;i<m;i++) {
             phi_field *phip=phim+ml*j+i;
