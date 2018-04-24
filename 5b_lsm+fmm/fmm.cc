@@ -37,7 +37,7 @@ void fmm::init_fields(int type) {
     }
 }
 
-/** Initializes the heap, by s*/
+/** Initializes the heap. */
 void fmm::init_heap() {
     w=0;
     for(int j=0;j<n;j++) {
@@ -56,17 +56,12 @@ void fmm::add_neighbors(phi_field *phip) {
     if(phip[ml].c==0) add_to_heap(phip+ml);
 }
 
-void fmm::add_to_heap(phi_field *phip) {
-    *(hep++)=phip;
-    calc_phi(phip);
-}
-
-void fmm:calc_phi(phi_field *phip) {
+double fmm:calc_phi(phi_field *phip) {
     double phiv,phih;
     bool vert=phi_look(phip,ml,phiv),
          horiz=phi_look(phip,1,phih);
 
-    phip->phi=vert?(horiz?phi_full(phiv,phih):phiv)
+    return vert?(horiz?phi_full(phiv,phih):phiv)
                   :(horiz?phih:0);
 }
 
@@ -89,21 +84,23 @@ bool fmm::phi_look(phi_field *phip,int d,double &phid) {
     return false;
 }
 
-void fmm::introduce(int ij,double tphi) {
+void fmm::add_to_heap(phi_field *phip) {
+    double tphi=calc_phi(phip);
 	int c=w,bc=c>>1;
 	while(bc>=1&&tphi<he[bc].phi) {
 		he[bc].bp=c;
 		he[c]=he[bc];
 		c=bc;bc=c>>1;
 	}
-    he[c]=phim[ij];
+    he[c]=phip;
     he[c].bp=c;
 	he[c].phi=tphi;
 	hp[c].c=1;
 	w++;
 }
 
-void fmm::trickle(phi_field *phip,double tphi) {
+void fmm::trickle(phi_field *phip) {
+    double tphi=calc_phi(phip);
 	int bc=c>>1;
 	if(bc>=1&&tphi<he[bc].phi) {
 		do {
@@ -111,12 +108,10 @@ void fmm::trickle(phi_field *phip,double tphi) {
 			he[c]=he[bc];
 			c=bc;bc=c>>1;
 		} while(bc>=1&&tphi<he[bc].phi);
-
-        he[c]=bp.c;
-        bp[ij]=c;
-		hp[c]=ij;
+        he[c]=phip;
+        he[c].bp=c;
 	}
-	phi[ij]=tphi;
+    he[c]=tphi;
 }
 
 void fmm::fast_march() {
@@ -131,13 +126,8 @@ void fmm::fast_march() {
 }
 
 void fmm::update(phi_field *phip) {
-    if(phip->c==1) {
-        calc_phi(phip);
-        trickle(phip);
-    } else if(phip->c==2) {
-        calc_phi(phip);
-        introduce();
-    }
+    if(phip->c==1) trickle(phip);
+    else if(phip->c==0) add_to_heap(phip);
 }
 
 void fmm::setup_indicator_field() {

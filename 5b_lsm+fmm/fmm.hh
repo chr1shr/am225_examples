@@ -46,16 +46,17 @@ class fmm {
             const double ay_,const double by_);
         ~fmm();
         void init_heap();
+        void fast_march();
         void add_neighbors(phi_field *phip);
         void add_to_heap(phi_field *phip);
-        void calc_phi(phi_field *phip);
+        double calc_phi(phi_field *phip);
         double phi_full(double phiv,double phih);
         void setup_indicator_field();
-        void introduce(int ij,double tphi);
-        void trickle(int c,int ij,double tphi);
-        void update();
+        void trickle(phi_field *phip);
+        void update(phi_field *phip);
         void output(const char *filename,const int mode);
     private:
+        void add_heap_memory();
         bool phi_look(phi_field *phip,int d,double &phid);
         /** The number of elements on the heap. */
         int w;
