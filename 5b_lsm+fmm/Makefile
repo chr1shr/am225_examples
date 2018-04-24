@@ -4,9 +4,9 @@ include ../config.mk
 iflags=-I../tgmg
 lflags=-L.
 
-objs=common.o levelset.o
+objs=common.o levelset.o fmm.o
 src=$(patsubst %.o,%.cc,$(objs))
-execs=ls_test
+execs=ls_test fmm_test
 
 all:
 	$(MAKE) executables

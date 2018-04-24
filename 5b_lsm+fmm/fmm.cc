@@ -8,21 +8,15 @@
  * simulation, dynamically allocates memory for level set.
  * \param[in] (m_,n_) the number of grid points to use in the horizontal and
  *                    vertical directions.
- * \param[in] (x_prd_,y_prd_) the periodicity in the x and y directions.
  * \param[in] (ax_,bx_) the lower and upper x-coordinate simulation bounds.
  * \param[in] (ay_,by_) the lower and upper y-coordinate simulation bounds. */
-fmm::fmm(const int m_,const int n_,const bool x_prd_,
-        const bool y_prd_,const double ax_,const double bx_,
+fmm::fmm(const int m_,const int n_,const double ax_,const double bx_,
         const double ay_,const double by_,const char *filename_)
     : m(m_), n(n_), mn(m_*n_), ml(m+4), x_prd(x_prd_), y_prd(y_prd_), ax(ax_),
     ay(ay_), bx(bx_), by(by_), dx((bx_-ax_)/m_), dy((by_-ay_)/n_), xsp(1/dx),
-    ysp(1/dy), phibase(new phi_field[ml*(n+4)]),
-    phim(fbase+2*ml+2), w(0), mem(2*(m+n)), he(new phi_field*[mem]) {
-
-    // Initialize the indicator field, and set the ghost regions
-    for(int i=0;i<ml*(n+4)) phibase[i].c=0;
-
-    for(int i=0;i<ml;
+    ysp(1/dy), xxsp(xsp*xsp), yysp(ysp*ysp), phibase(new phi_field[ml*(n+4)]),
+    phim(fbase+2*ml+2), w(1), mem(2*(m+n)), he(new phi_field*[mem]) {
+    setup_indicator_field();
 }
 
 /** The class destructor frees the dynamically allocated memory. */
@@ -43,6 +37,7 @@ void fmm::init_fields(int type) {
     }
 }
 
+/** Initializes the heap, by s*/
 void fmm::init_heap() {
     w=0;
     for(int j=0;j<n;j++) {
@@ -67,7 +62,31 @@ void fmm::add_to_heap(phi_field *phip) {
 }
 
 void fmm:calc_phi(phi_field *phip) {
-    if(phip[-1].c&3==2) {
+    double phiv,phih;
+    bool vert=phi_look(phip,ml,phiv),
+         horiz=phi_look(phip,1,phih);
+
+    phip->phi=vert?(horiz?phi_full(phiv,phih):phiv)
+                  :(horiz?phih:0);
+}
+
+double fmm:phi_full(double phiv,double phih) {
+    const double a=xxsp+yysp;
+    double b=-phih*xxsp-phiv*yysp;
+    double c=phih*phih*xxsp+phiv*phiv*yysp-1;
+    return (-b+sqrt(b*b-a*c))/a;
+}
+
+bool fmm::phi_look(phi_field *phip,int d,double &phid) {
+    if(phip[-d].c==2) {
+        phid=phip[d].c==2?min(phip[-d].phi,phip[d],phi)
+                         :phip[-d].c;
+        return true;
+    } else if(phip[d].c==2) {
+        phid=phip[d].c;
+        return true;
+    }
+    return false;
 }
 
 void fmm::introduce(int ij,double tphi) {
@@ -84,7 +103,7 @@ void fmm::introduce(int ij,double tphi) {
 	w++;
 }
 
-void fmm::trickle(int c,int ij,double tphi) {
+void fmm::trickle(phi_field *phip,double tphi) {
 	int bc=c>>1;
 	if(bc>=1&&tphi<he[bc].phi) {
 		do {
@@ -92,7 +111,7 @@ void fmm::trickle(int c,int ij,double tphi) {
 			he[c]=he[bc];
 			c=bc;bc=c>>1;
 		} while(bc>=1&&tphi<he[bc].phi);
-		
+
         he[c]=bp.c;
         bp[ij]=c;
 		hp[c]=ij;
@@ -100,29 +119,75 @@ void fmm::trickle(int c,int ij,double tphi) {
 	phi[ij]=tphi;
 }
 
-void fmm::update(int i,int ij) {
-	if (s[ij]==z.q) {
-		s[ij]=z.p;
-		if(w==mem) add_memory();
-		introduce(ij,calc(i,ij));
-	} else if (s[ij]==z.p) {
-		trickle(bp[ij],ij,calc(i,ij));
-	}
+void fmm::fast_march() {
+    phi_field *phip;
+    init_heap();
+    while(w>1) {
+        phip=he[1];
+        phip->c=2;
+        update(phip-ml);update(phip-1);
+        update(phip+1);update(phip+ml);
+    }
 }
 
-void fmm::set(int i,int ij) {
-
+void fmm::update(phi_field *phip) {
+    if(phip->c==1) {
+        calc_phi(phip);
+        trickle(phip);
+    } else if(phip->c==2) {
+        calc_phi(phip);
+        introduce();
+    }
 }
 
+void fmm::setup_indicator_field() {
+    phi_field *phip=phibase,*phie;
+    for(phie=phip+2*ml;phip<phie;phip++) phip->c=3;
+    while(phip<phibase+(n+2)*ml) {
+        (phip++)->c=3;(phip++)->c=3;
+        for(phie=phip+2*ml;phip<phie;phip++) phip->c=0;
+        (phip++)->c=3;(phip++)->c=3;
+    }
+    for(phie=phip+2*ml;phip<phie;phip++) phip->c=3;
+}
 
 void fmm::add_heap_memory() {
-    mem>>=1;
-    if(mem>=max_heap_memory) {
+    if(mem>m*n) {
         fputs("Maximum heap memory allocation exceeded\n",stderr);
         exit(1);
     }
+    mem>>=1;
     nhe=new phi_field*[mem];
     for(int i=0;i<w;i++) nhe[i]=he[i];
     delete [] he;
 }
 
+/** Outputs a 2D array to a file in a format that can be read by Gnuplot.
+ * \param[in] filename the field name to use as the filename prefix. */
+void fmm::output(const char *filename,const int mode,) {
+
+    // Assemble the output filename and open the output file
+    FILE *outf=safe_fopen(filename,"wb");
+
+    // Output the first line of the file
+    int i,j;
+    float *buf=new float[m+1],*bp=buf+1,*be=bp+m;
+    *buf=m;
+    for(i=0;i<m;i++) *(bp++)=ax+(i+0.5)*dx;
+    fwrite(buf,sizeof(float),l+1,outf);
+
+    // Output the field values to the file
+    field *phir=phim;
+    for(j=0;j<l;j++,phir+=ml) {
+        field *phip=phir;
+        *buf=ay+(j+disp)*dy;bp=buf+1;
+        switch(mode) {
+            case 0: while(bp<be) *(bp++)=(phip++)->phi;
+            case 1: while(bp<be) *(bp++)=(phip++)->c;
+        fwrite(buf,sizeof(float),m+1,outf);
+    }
+
+    // Close the file and free the dynamically allocated memory
+    fclose(outf);
+    delete [] buf;
+}
