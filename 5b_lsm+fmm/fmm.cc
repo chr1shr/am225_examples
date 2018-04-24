@@ -86,6 +86,8 @@ inline bool fmm::phi_look(phi_field *phip,int d,double &phid) {
 
 void fmm::add_to_heap(phi_field *phip) {
     double tphi=calc_phi(phip);
+    int k=int(phip-phim),j=k/ml,i=k%ml;
+    printf("%d %d %g\n",i,j,tphi);
 	int c=w,bc=c>>1;
 	while(bc>=1&&tphi<he[bc]->phi) {
 		he[bc]->bp=c;
@@ -117,13 +119,42 @@ void fmm::trickle(phi_field *phip) {
 void fmm::fast_march() {
     phi_field *phip;
     init_heap();
+    puts("yo");
     while(w>1) {
         phip=he[1];
         phip->c=2;
+        reduce_heap();
         if(w+4>mem) add_heap_memory();
         update(phip-ml);update(phip-1);
         update(phip+1);update(phip+ml);
     }
+}
+
+void fmm::reduce_heap() {
+    phi_field *phip=he[--w];
+    double &tphi=phip->phi;
+    int bc=1,c=bc<<1,cmin;
+    while(c+1<w) {
+        if(he[c]->phi<tphi) {
+            cmin=he[c+1]->phi<he[c]->phi?c+1:c;
+        } else {
+            if(he[c+1]->phi<tphi) cmin=c+1;
+            else break;
+        }
+        he[bc]=he[cmin];
+        he[bc]->bp=bc;
+        bc=cmin;
+        c=bc<<1;
+    }
+    if(c+1==w) {
+        if(he[c]->phi<tphi) {
+            he[bc]=he[c];
+            he[bc]->bp=bc;
+            bc=c;
+        }
+    }
+    he[bc]=phip;
+    he[bc]->bp=bc;
 }
 
 void fmm::update(phi_field *phip) {
@@ -136,7 +167,7 @@ void fmm::setup_indicator_field() {
     for(phie=phip+2*ml;phip<phie;phip++) phip->c=3;
     while(phip<phibase+(n+2)*ml) {
         (phip++)->c=3;(phip++)->c=3;
-        for(phie=phip+2*ml;phip<phie;phip++) phip->c=0;
+        for(phie=phip+m;phip<phie;phip++) phip->c=0;
         (phip++)->c=3;(phip++)->c=3;
     }
     for(phie=phip+2*ml;phip<phie;phip++) phip->c=3;

@@ -55,6 +55,7 @@ class fmm {
         void setup_indicator_field();
         void trickle(phi_field *phip);
         void update(phi_field *phip);
+        void reduce_heap();
         void output(const char *filename,int mode);
     private:
         inline double min(double a,double b) {
