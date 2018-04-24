@@ -15,7 +15,7 @@ fmm::fmm(const int m_,const int n_,const double ax_,const double bx_,
     : m(m_), n(n_), mn(m_*n_), ml(m+4), ax(ax_), ay(ay_), bx(bx_), by(by_),
     dx((bx_-ax_)/m_), dy((by_-ay_)/n_), xsp(1/dx), ysp(1/dy), xxsp(xsp*xsp),
     yysp(ysp*ysp), phibase(new phi_field[ml*(n+4)]), phim(phibase+2*ml+2),
-    w(1), mem(2*(m+n)), he(new phi_field*[mem]) {
+    w(1), mem(20*(m+n)), he(new phi_field*[mem]) {
     setup_indicator_field();
 }
 
@@ -27,11 +27,14 @@ fmm::~fmm() {
 
 /** Initializes the simulation fields. */
 void fmm::init_fields() {
-    const int jl=4*n/10,ju=6*n/10;
+    phi_field *fp=phim+10*ml+10;
+    fp->c=2;
+    fp->phi=0.;
+    return;
 
+    const int jl=4*n/10,ju=6*n/10;
     for(int j=jl;j<ju;j++) {
         phi_field *fp=phim+ml*j+(m/2);
-
         fp->c=2;
         fp->phi=0;
     }
@@ -61,24 +64,26 @@ double fmm::calc_phi(phi_field *phip) {
     bool vert=phi_look(phip,ml,phiv),
          horiz=phi_look(phip,1,phih);
 
-    return vert?(horiz?phi_full(phiv,phih):phiv)
-                  :(horiz?phih:0);
+    return vert?(horiz?phi_full(phiv,phih):phiv+dy)
+               :(horiz?phih+dx:0);
 }
 
 double fmm::phi_full(double phiv,double phih) {
+   // return min(phiv+dy,phih+dx);
     const double a=xxsp+yysp;
     double b=-phih*xxsp-phiv*yysp;
     double c=phih*phih*xxsp+phiv*phiv*yysp-1;
+    //printf("ENO %g %g %g %g %g %g\n",phiv,phih,a,b,c,(-b+sqrt(b*b-a*c))/a);
     return (-b+sqrt(b*b-a*c))/a;
 }
 
 inline bool fmm::phi_look(phi_field *phip,int d,double &phid) {
     if(phip[-d].c==2) {
         phid=phip[d].c==2?min(phip[-d].phi,phip[d].phi)
-                         :phip[-d].c;
+                         :phip[-d].phi;
         return true;
     } else if(phip[d].c==2) {
-        phid=phip[d].c;
+        phid=phip[d].phi;
         return true;
     }
     return false;
@@ -103,7 +108,7 @@ void fmm::add_to_heap(phi_field *phip) {
 
 void fmm::trickle(phi_field *phip) {
     double tphi=calc_phi(phip);
-	int c=phip->c,bc=c>>1;
+	int c=phip->bp,bc=c>>1;
 	if(bc>=1&&tphi<he[bc]->phi) {
 		do {
 			he[bc]->bp=c;
@@ -119,7 +124,6 @@ void fmm::trickle(phi_field *phip) {
 void fmm::fast_march() {
     phi_field *phip;
     init_heap();
-    puts("yo");
     while(w>1) {
         phip=he[1];
         phip->c=2;
