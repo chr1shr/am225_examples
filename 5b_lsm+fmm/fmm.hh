@@ -46,6 +46,7 @@ class fmm {
             const double ay_,const double by_);
         ~fmm();
         void init_fields();
+        void mark_box(int il,int iu,int jl,int ju);
         void init_heap();
         void fast_march();
         void add_neighbors(phi_field *phip);
@@ -56,6 +57,9 @@ class fmm {
         void trickle(phi_field *phip);
         void update(phi_field *phip);
         void reduce_heap();
+        void set_boundary_phi();
+        void integrate_path(double x,double y);
+        double bilinear(double x,double y,double &gx,double &gy);
         void output(const char *filename,int mode);
     private:
         inline double min(double a,double b) {

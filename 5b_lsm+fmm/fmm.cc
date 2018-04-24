@@ -30,6 +30,8 @@ void fmm::init_fields() {
     phi_field *fp=phim+10*ml+10;
     fp->c=2;
     fp->phi=0.;
+
+/*    mark_box(45,55,30,80);
     return;
 
     const int jl=4*n/10,ju=6*n/10;
@@ -37,7 +39,13 @@ void fmm::init_fields() {
         phi_field *fp=phim+ml*j+(m/2);
         fp->c=2;
         fp->phi=0;
-    }
+    }*/
+}
+
+/** Marks a box of points to be part of the boundary. */
+void fmm::mark_box(int il,int iu,int jl,int ju) {
+    for(int j=jl;j<ju;j++) for(int i=il;i<iu;i++)
+        phim[j*ml+i].c=3;
 }
 
 /** Initializes the heap by scanning over the grid and adding all the neighbors
@@ -91,6 +99,11 @@ double fmm::phi_full(double phiv,double phih) {
     return (-b+sqrt(b*b-a*c))/a;
 }
 
+/** Finds the minimum set value of phi by comparing two adjacent neighbors.
+ * \param[in] phip a pointer to the grid point to consider.
+ * \param[in] d the memory step to the neighbors.
+ * \param[out] phid the minimum set value, if available.
+ * \return True if a value was found, false otherwise. */
 inline bool fmm::phi_look(phi_field *phip,int d,double &phid) {
     if(phip[-d].c==2) {
         phid=phip[d].c==2?min(phip[-d].phi,phip[d].phi)
@@ -103,45 +116,69 @@ inline bool fmm::phi_look(phi_field *phip,int d,double &phid) {
     return false;
 }
 
+/** Adds a grid point to the heap.
+ * \param[in] phip a pointer to the grid point to consider. */
 void fmm::add_to_heap(phi_field *phip) {
     double tphi=calc_phi(phip);
-    int k=int(phip-phim),j=k/ml,i=k%ml;
-    printf("%d %d %g\n",i,j,tphi);
-	int c=w,bc=c>>1;
-	while(bc>=1&&tphi<he[bc]->phi) {
-		he[bc]->bp=c;
-		he[c]=he[bc];
-		c=bc;bc=c>>1;
-	}
+
+    // Initially, the grid point will be placed at the top of the heap. Perform
+    // swap operations until the heap property is restored.
+    int c=w++,bc=c>>1;
+    while(bc>=1&&tphi<he[bc]->phi) {
+        he[bc]->bp=c;
+        he[c]=he[bc];
+        c=bc;bc=c>>1;
+    }
+
+    // Set the information for the new point
     he[c]=phip;
     he[c]->bp=c;
-	he[c]->phi=tphi;
-	he[c]->c=1;
-	w++;
+    he[c]->phi=tphi;
+    he[c]->c=1;
 }
 
+/** Adjusts the heap when a phi value may have decreased. */
 void fmm::trickle(phi_field *phip) {
+
+    // Compute the new phi value
     double tphi=calc_phi(phip);
-	int c=phip->bp,bc=c>>1;
-	if(bc>=1&&tphi<he[bc]->phi) {
-		do {
-			he[bc]->bp=c;
-			he[c]=he[bc];
-			c=bc;bc=c>>1;
-		} while(bc>=1&&tphi<he[bc]->phi);
+
+    // If the phi value is smaller than the parent, then swap it with the parent
+    int c=phip->bp,bc=c>>1;
+    if(bc>=1&&tphi<he[bc]->phi) {
+        do {
+            he[bc]->bp=c;
+            he[c]=he[bc];
+            c=bc;bc=c>>1;
+        } while(bc>=1&&tphi<he[bc]->phi);
         he[c]=phip;
         he[c]->bp=c;
-	}
+    }
+
+    // Update the new phi value
     he[c]->phi=tphi;
 }
 
+/** Performs the fast marching method. */
 void fmm::fast_march() {
     phi_field *phip;
+
+    // Initialize the heap, by finding neighbors of set points
     init_heap();
+
+    // Loop until the heap is non-empty, each time considering the point with
+    // the smallest phi value
     while(w>1) {
+
+        // Change the status of the point with the smallest phi value to "set"
         phip=he[1];
         phip->c=2;
+
+        // Remove this point from the heap
         reduce_heap();
+
+        // Check neighbors of this point, to see if they must be added to the
+        // heap or have their phi values updated
         if(w+4>mem) add_heap_memory();
         update(phip-ml);update(phip-1);
         update(phip+1);update(phip+ml);
@@ -175,11 +212,17 @@ void fmm::reduce_heap() {
     he[bc]->bp=bc;
 }
 
+/* Updates a grid point during the fast marching calculation. If it has never been
+ * considered, it is added to the heap. If it is already marked, then its phi value
+ * is updated.
+ * \param[in] phip a pointer to the grid point to consider. */
 void fmm::update(phi_field *phip) {
     if(phip->c==1) trickle(phip);
     else if(phip->c==0) add_to_heap(phip);
 }
 
+/** Sets up the indicator field that marks the status of the grid points during
+ * the fast march. */
 void fmm::setup_indicator_field() {
     phi_field *phip=phibase,*phie;
     for(phie=phip+2*ml;phip<phie;phip++) phip->c=3;
@@ -191,11 +234,18 @@ void fmm::setup_indicator_field() {
     for(phie=phip+2*ml;phip<phie;phip++) phip->c=3;
 }
 
+/** Doubles the size of the heap memory. */
 void fmm::add_heap_memory() {
+
+    // If the current allocation exceeds the total number of grid points, that indicates
+    // a problem, so exit with an error.
     if(mem>m*n) {
         fputs("Maximum heap memory allocation exceeded\n",stderr);
         exit(1);
     }
+
+    // Allocate an array of double the size, and copy the contents of the
+    // current array into it
     mem<<=1;
     phi_field **nhe=new phi_field*[mem];
     for(int i=0;i<w;i++) nhe[i]=he[i];
@@ -231,4 +281,44 @@ void fmm::output(const char *filename,int mode) {
     // Close the file and free the dynamically allocated memory
     fclose(outf);
     delete [] buf;
+}
+
+/** Sets the boundary points to have a large phi value. */
+void fmm::set_boundary_phi() {
+    const double phimax=1.05*sqrt((bx-ax)*(bx-ax)+(by-ay)*(by-ay));
+    for(int i=0;i<ml*(n+4);i++) if(phibase[i].c==3) phibase[i].phi=phimax;
+}
+
+/** Integrates an ODE following the negative gradient.
+ * \param[in] (x,y) the starting point. */
+void fmm::integrate_path(double x,double y) {
+    double dt=0.0001;
+    double p,gx,gy;
+
+    p=bilinear(x,y,gx,gy);
+    printf("%g %g %g %g %g\n",x,y,p,gx,gy);
+
+    while(p>0.1*(dx+dy)) {
+        x-=dt*gx;
+        y-=dt*gy;
+        p=bilinear(x,y,gx,gy);
+        printf("%g %g %g %g %g\n",x,y,p,gx,gy);
+    }
+}
+
+double fmm::bilinear(double x,double y,double &gx,double &gy) {
+    x=(x-ax)*xsp-0.5;y=(y-ay)*ysp-0.5;
+    int i=int(x);
+    int j=int(y);
+    if(i<-1) i=-1;else if(i>=m) i=m-1;
+    if(j<-1) j=-1;else if(j>=n) i=n-1;
+
+    // Compute the tracer's fractional position with the grid cell
+    x-=i;y-=j;
+
+    // Compute tracer's new position
+    phi_field *fp=phim+(i+ml*j);
+    gx=xsp*((1-y)*(fp[1].phi-fp->phi)+y*(fp[ml+1].phi-fp[ml].phi));
+    gy=ysp*((1-x)*(fp[ml].phi-fp->phi)+x*(fp[ml+1].phi-fp[1].phi));
+    return (1-y)*(fp->phi*(1-x)+fp[1].phi*x)+y*(fp[ml].phi*(1-x)+fp[ml+1].phi*x);
 }

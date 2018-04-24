@@ -8,6 +8,9 @@ int main() {
 
     f.fast_march();
 
+    f.set_boundary_phi();
     f.output("phi.out",0);
     f.output("ind.out",1);
+
+    f.integrate_path(0.9,0.9);
 }
