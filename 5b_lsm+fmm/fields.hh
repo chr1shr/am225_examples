@@ -28,4 +28,10 @@ struct field {
     }
 };
 
+struct phi_field {
+    double phi;
+    int c;
+    int bp;
+}
+
 #endif
