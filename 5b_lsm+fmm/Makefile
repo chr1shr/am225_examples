@@ -4,9 +4,9 @@ include ../config.mk
 iflags=-I../tgmg
 lflags=-L.
 
-objs=common.o levelset.o
+objs=common.o levelset.o fmm.o
 src=$(patsubst %.o,%.cc,$(objs))
-execs=ls_test
+execs=ls_test fmm_test
 
 all:
 	$(MAKE) executables
@@ -18,11 +18,14 @@ depend: $(src)
 
 -include Makefile.dep
 
-libf2d.a: $(objs)
+liblsm.a: $(objs)
 	rm -f liblsm.a
 	ar rs liblsm.a $^
 
-ls_test: ls_test.cc libf2d.a
+ls_test: ls_test.cc liblsm.a
+	$(cxx) $(cflags) $(iflags) -o $@ $< $(lflags) -llsm
+
+fmm_test: fmm_test.cc liblsm.a
 	$(cxx) $(cflags) $(iflags) -o $@ $< $(lflags) -llsm
 
 %.o: %.cc

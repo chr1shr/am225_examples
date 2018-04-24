@@ -1,0 +1,1 @@
+write_png.o: write_png.cc write_png.hh

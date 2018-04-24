@@ -10,3 +10,7 @@ lp_lflags=-llapack -lblas
 # FFTW flags
 fftw_iflags=
 fftw_lflags=-lfftw3
+
+# libpng flags
+png_iflags=
+png_lflags=-lpng
