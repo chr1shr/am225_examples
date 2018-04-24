@@ -40,40 +40,54 @@ void fmm::init_fields() {
     }
 }
 
-/** Initializes the heap. */
+/** Initializes the heap by scanning over the grid and adding all the neighbors
+ * of set points. */
 void fmm::init_heap() {
     w=1;
     for(int j=0;j<n;j++) {
         for(int i=0;i<m;i++) {
             phi_field *phip=phim+ml*j+i;
+
+            // If this point's indicator is 2, then scan all of its neighbors
             if(phip->c==2) add_neighbors(phip);
         }
     }
 }
 
+/** Scans the neighbors of a grid point, and adds any empty ones to the heap.
+ * \param[in] phip a pointer to the grid point to consider. */
 void fmm::add_neighbors(phi_field *phip) {
+
+    // Check that there is enough heap memory for four new pointers
     if(w+4>mem) add_heap_memory();
+
+    // Add any empty grid points to the heap
     if(phip[-ml].c==0) add_to_heap(phip-ml);
     if(phip[-1].c==0) add_to_heap(phip-1);
     if(phip[1].c==0) add_to_heap(phip+1);
     if(phip[ml].c==0) add_to_heap(phip+ml);
 }
 
+/** Calculates the value of the phi field at a given grid point.
+ * \param[in] phip a pointer to the grid point to consider. */
 double fmm::calc_phi(phi_field *phip) {
     double phiv,phih;
+
+    // Look for available phi values in the horizontal and vertical directions,
+    // finding the minimum
     bool vert=phi_look(phip,ml,phiv),
          horiz=phi_look(phip,1,phih);
 
+    // Compute the phi value. For the case when both horizontal and vertical
+    // neighbors are available, we need
     return vert?(horiz?phi_full(phiv,phih):phiv+dy)
                :(horiz?phih+dx:0);
 }
 
 double fmm::phi_full(double phiv,double phih) {
-   // return min(phiv+dy,phih+dx);
     const double a=xxsp+yysp;
     double b=-phih*xxsp-phiv*yysp;
     double c=phih*phih*xxsp+phiv*phiv*yysp-1;
-    //printf("ENO %g %g %g %g %g %g\n",phiv,phih,a,b,c,(-b+sqrt(b*b-a*c))/a);
     return (-b+sqrt(b*b-a*c))/a;
 }
 

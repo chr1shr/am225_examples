@@ -63,7 +63,7 @@ class fmm {
         }
         void add_heap_memory();
         inline bool phi_look(phi_field *phip,int d,double &phid);
-        /** The number of elements on the heap. */
+        /** The heap counter, equal to the number of elements minus one. */
         int w;
         /** The current memory allocation for the heap. */
         int mem;
