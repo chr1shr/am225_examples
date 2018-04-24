@@ -45,6 +45,7 @@ class fmm {
         fmm(const int m_,const int n_,const double ax_,const double bx_,
             const double ay_,const double by_);
         ~fmm();
+        void init_fields();
         void init_heap();
         void fast_march();
         void add_neighbors(phi_field *phip);
@@ -54,10 +55,13 @@ class fmm {
         void setup_indicator_field();
         void trickle(phi_field *phip);
         void update(phi_field *phip);
-        void output(const char *filename,const int mode);
+        void output(const char *filename,int mode);
     private:
+        inline double min(double a,double b) {
+            return a<b?a:b;
+        }
         void add_heap_memory();
-        bool phi_look(phi_field *phip,int d,double &phid);
+        inline bool phi_look(phi_field *phip,int d,double &phid);
         /** The number of elements on the heap. */
         int w;
         /** The current memory allocation for the heap. */

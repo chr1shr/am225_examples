@@ -11,11 +11,11 @@
  * \param[in] (ax_,bx_) the lower and upper x-coordinate simulation bounds.
  * \param[in] (ay_,by_) the lower and upper y-coordinate simulation bounds. */
 fmm::fmm(const int m_,const int n_,const double ax_,const double bx_,
-        const double ay_,const double by_,const char *filename_)
-    : m(m_), n(n_), mn(m_*n_), ml(m+4), x_prd(x_prd_), y_prd(y_prd_), ax(ax_),
-    ay(ay_), bx(bx_), by(by_), dx((bx_-ax_)/m_), dy((by_-ay_)/n_), xsp(1/dx),
-    ysp(1/dy), xxsp(xsp*xsp), yysp(ysp*ysp), phibase(new phi_field[ml*(n+4)]),
-    phim(fbase+2*ml+2), w(1), mem(2*(m+n)), he(new phi_field*[mem]) {
+        const double ay_,const double by_)
+    : m(m_), n(n_), mn(m_*n_), ml(m+4), ax(ax_), ay(ay_), bx(bx_), by(by_),
+    dx((bx_-ax_)/m_), dy((by_-ay_)/n_), xsp(1/dx), ysp(1/dy), xxsp(xsp*xsp),
+    yysp(ysp*ysp), phibase(new phi_field[ml*(n+4)]), phim(phibase+2*ml+2),
+    w(1), mem(2*(m+n)), he(new phi_field*[mem]) {
     setup_indicator_field();
 }
 
@@ -26,7 +26,7 @@ fmm::~fmm() {
 }
 
 /** Initializes the simulation fields. */
-void fmm::init_fields(int type) {
+void fmm::init_fields() {
     const int jl=4*n/10,ju=6*n/10;
 
     for(int j=jl;j<ju;j++) {
@@ -43,7 +43,7 @@ void fmm::init_heap() {
     for(int j=0;j<n;j++) {
         for(int i=0;i<m;i++) {
             phi_field *phip=phim+ml*j+i;
-            if(*phip==2) add_neighbors(*phip);
+            if(phip->c==2) add_neighbors(phip);
         }
     }
 }
@@ -56,7 +56,7 @@ void fmm::add_neighbors(phi_field *phip) {
     if(phip[ml].c==0) add_to_heap(phip+ml);
 }
 
-double fmm:calc_phi(phi_field *phip) {
+double fmm::calc_phi(phi_field *phip) {
     double phiv,phih;
     bool vert=phi_look(phip,ml,phiv),
          horiz=phi_look(phip,1,phih);
@@ -65,16 +65,16 @@ double fmm:calc_phi(phi_field *phip) {
                   :(horiz?phih:0);
 }
 
-double fmm:phi_full(double phiv,double phih) {
+double fmm::phi_full(double phiv,double phih) {
     const double a=xxsp+yysp;
     double b=-phih*xxsp-phiv*yysp;
     double c=phih*phih*xxsp+phiv*phiv*yysp-1;
     return (-b+sqrt(b*b-a*c))/a;
 }
 
-bool fmm::phi_look(phi_field *phip,int d,double &phid) {
+inline bool fmm::phi_look(phi_field *phip,int d,double &phid) {
     if(phip[-d].c==2) {
-        phid=phip[d].c==2?min(phip[-d].phi,phip[d],phi)
+        phid=phip[d].c==2?min(phip[-d].phi,phip[d].phi)
                          :phip[-d].c;
         return true;
     } else if(phip[d].c==2) {
@@ -87,31 +87,31 @@ bool fmm::phi_look(phi_field *phip,int d,double &phid) {
 void fmm::add_to_heap(phi_field *phip) {
     double tphi=calc_phi(phip);
 	int c=w,bc=c>>1;
-	while(bc>=1&&tphi<he[bc].phi) {
-		he[bc].bp=c;
+	while(bc>=1&&tphi<he[bc]->phi) {
+		he[bc]->bp=c;
 		he[c]=he[bc];
 		c=bc;bc=c>>1;
 	}
     he[c]=phip;
-    he[c].bp=c;
-	he[c].phi=tphi;
-	hp[c].c=1;
+    he[c]->bp=c;
+	he[c]->phi=tphi;
+	he[c]->c=1;
 	w++;
 }
 
 void fmm::trickle(phi_field *phip) {
     double tphi=calc_phi(phip);
-	int bc=c>>1;
-	if(bc>=1&&tphi<he[bc].phi) {
+	int c=phip->c,bc=c>>1;
+	if(bc>=1&&tphi<he[bc]->phi) {
 		do {
-			he[bc].bp=c;
+			he[bc]->bp=c;
 			he[c]=he[bc];
 			c=bc;bc=c>>1;
-		} while(bc>=1&&tphi<he[bc].phi);
+		} while(bc>=1&&tphi<he[bc]->phi);
         he[c]=phip;
-        he[c].bp=c;
+        he[c]->bp=c;
 	}
-    he[c]=tphi;
+    he[c]->phi=tphi;
 }
 
 void fmm::fast_march() {
@@ -120,6 +120,7 @@ void fmm::fast_march() {
     while(w>1) {
         phip=he[1];
         phip->c=2;
+        if(w+4>mem) add_heap_memory();
         update(phip-ml);update(phip-1);
         update(phip+1);update(phip+ml);
     }
@@ -146,15 +147,15 @@ void fmm::add_heap_memory() {
         fputs("Maximum heap memory allocation exceeded\n",stderr);
         exit(1);
     }
-    mem>>=1;
-    nhe=new phi_field*[mem];
+    mem<<=1;
+    phi_field **nhe=new phi_field*[mem];
     for(int i=0;i<w;i++) nhe[i]=he[i];
     delete [] he;
 }
 
 /** Outputs a 2D array to a file in a format that can be read by Gnuplot.
  * \param[in] filename the field name to use as the filename prefix. */
-void fmm::output(const char *filename,const int mode,) {
+void fmm::output(const char *filename,int mode) {
 
     // Assemble the output filename and open the output file
     FILE *outf=safe_fopen(filename,"wb");
@@ -164,16 +165,17 @@ void fmm::output(const char *filename,const int mode,) {
     float *buf=new float[m+1],*bp=buf+1,*be=bp+m;
     *buf=m;
     for(i=0;i<m;i++) *(bp++)=ax+(i+0.5)*dx;
-    fwrite(buf,sizeof(float),l+1,outf);
+    fwrite(buf,sizeof(float),m+1,outf);
 
     // Output the field values to the file
-    field *phir=phim;
-    for(j=0;j<l;j++,phir+=ml) {
-        field *phip=phir;
-        *buf=ay+(j+disp)*dy;bp=buf+1;
+    phi_field *phir=phim;
+    for(j=0;j<m;j++,phir+=ml) {
+        phi_field *phip=phir;
+        *buf=ay+(j+0.5)*dy;bp=buf+1;
         switch(mode) {
-            case 0: while(bp<be) *(bp++)=(phip++)->phi;
+            case 0: while(bp<be) *(bp++)=(phip++)->phi;break;
             case 1: while(bp<be) *(bp++)=(phip++)->c;
+        }
         fwrite(buf,sizeof(float),m+1,outf);
     }
 

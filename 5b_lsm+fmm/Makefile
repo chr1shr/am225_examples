@@ -18,11 +18,14 @@ depend: $(src)
 
 -include Makefile.dep
 
-libf2d.a: $(objs)
+liblsm.a: $(objs)
 	rm -f liblsm.a
 	ar rs liblsm.a $^
 
-ls_test: ls_test.cc libf2d.a
+ls_test: ls_test.cc liblsm.a
+	$(cxx) $(cflags) $(iflags) -o $@ $< $(lflags) -llsm
+
+fmm_test: fmm_test.cc liblsm.a
 	$(cxx) $(cflags) $(iflags) -o $@ $< $(lflags) -llsm
 
 %.o: %.cc
