@@ -9,7 +9,7 @@
 
 #include "fields.hh"
 
-/** A class to carry out a 2D incompressible fluid simulation. */
+/** A class to carry out a simple level set simulation. */
 class levelset {
     public:
         /** The number of grid cells in the horizontal direction. */
@@ -56,6 +56,8 @@ class levelset {
         double time;
         /** The current frame number. */
         int f_num;
+	/** Whether to oscillate the applied velocity field or not. */
+	bool oscillate_vel;
         levelset(const int m_,const int n_,const bool x_prd_,const bool y_prd_,
                  const double ax_,const double bx_,const double ay_,const double by_,
                  const char *filename_);
