@@ -68,6 +68,8 @@ Each Unit has several different directories with programs within them:
 
 1c_dop853 - The eighth-order Dormand-Prince DOP853 integrator
 
+1d_symplectic - Symplectic integration examples
+
 2a_lapack+krylov - Examples using BLAS, LAPACK. Krylov methods applied to a
 radial basis function test case.
 
@@ -78,12 +80,12 @@ radial basis function test case.
 4a_f_volume - Finite volume examples. Comparison to finite difference methods.
 
 4b_traffic - Example programs to simulate the traffic equation, a nonlinear
-hyperbolic conservation law.
+hyperbolic conservation law
 
 5a_fluid_sim - Simulation of incompressible fluids using Chorin's projection
-method.
+method
 
-5b_lsm_fmm - Level set method and the fast marching method examples.
+5b_lsm_fmm - Level set method and the fast marching method examples
 
 tgmg - An prototype 2D templated multigrid library developed by the Rycroft
-group, which is required by the incompressible fluid simulation.
+group, which is required by the incompressible fluid simulation
