@@ -5,7 +5,7 @@
 int main() {
 
     // Number of snapshots to output
-    const int snaps=20;
+    const int snaps=32;
 
     // Number of gridpoints
     const int m=256;
@@ -19,5 +19,5 @@ int main() {
     tr.init_step_function();
 
     // Integrate and save the solution snapshots to file
-    tr.solve("traf.out",snaps,1.0,sf);
+    tr.solve("traf.out",snaps,2.0,sf);
 }

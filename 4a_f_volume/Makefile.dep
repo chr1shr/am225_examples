@@ -1,5 +1,2 @@
 diffuse.o: diffuse.cc diffuse.hh
 ho_transport.o: ho_transport.cc ho_transport.hh
-traffic.o: traffic.cc traffic.hh
-car_model.o: car_model.cc car_model.hh ../1a_ode_solvers/sol_rk4.hh \
- ../1a_ode_solvers/sol_base.hh

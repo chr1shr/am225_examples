@@ -7,5 +7,5 @@ int main() {
     car_model cm(60);
 
     // Simulate to t=100, and output 200 snapshots
-    cm.solve_fixed(100.,200,true);
+    cm.solve_fixed(100.,150,true);
 }
