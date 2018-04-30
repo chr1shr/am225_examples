@@ -17,7 +17,7 @@ depend:
 
 # A Makefile target to remove all the built files
 clean:
-	rm $(objs) $(execs)
+	rm -f $(objs) $(execs)
 
 %.o: %.cc
 	$(cxx) $(cflags) -c $<
