@@ -14,9 +14,9 @@ mgs_fem_varying_rho::mgs_fem_varying_rho(fluid_2d &f) : m(f.m_fem), n(f.n_fem),
     mg.clear_z();
 }
 
-mgs_fem_base::mgs_fem_base(int m_,int n_,bool x_prd_,bool y_prd_,double dx,double dy) :
-    m(f.m_fem), n(f.n_fem), mn(m*n), x_prd(f.x_prd), y_prd(f.y_prd),
-    dydx(f.dy/f.dx), dxdy(f.dx/f.dy), fm(1./3.*(dxdy+dydx)), fm_inv(1.0/fm),
+mgs_fem_varying_rho::mgs_fem_varying_rho(int m_,int n_,bool x_prd_,bool y_prd_,double dx,double dy) :
+    m(m_), n(n_), mn(m*n), x_prd(x_prd_), y_prd(y_prd_), dydx(dy/dx),
+    dxdy(dx/dy), fm(1./3.*(dxdy+dydx)), fm_inv(1.0/fm),
     fey(1./3.*(-2*dxdy+dydx)), hey(0.5*fey), fex(1./3.*(-2*dydx+dxdy)),
     hex(0.5*fex), fc(-1./6.*(dxdy+dydx)), acc(tgmg_accuracy(fm,1e4)),
     z(new double[mn]), src(new double[mn]), irho(new double[mn]), mg(*this,src,z) {
@@ -80,3 +80,4 @@ template void tgmg_base<mgs_fem_varying_rho,double,double>
     ::output_res(char const*,double,double,double,double);
 template double tgmg_base<mgs_fem_varying_rho,double,double>
     ::mds();
+template class tgmg_base<tgmg_level<double,double>,double,double>;

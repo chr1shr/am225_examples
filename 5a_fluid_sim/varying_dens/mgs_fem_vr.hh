@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <cmath>
 
-#include "mgs_common.hh"
 #include "tgmg.hh"
 
 class fluid_2d;
@@ -49,11 +48,15 @@ struct mgs_fem_varying_rho {
     /** The array holding the solution of the linear system (i.e. the fluid
      * pressure). */
     double* const z;
+    /** An array for holding the source term, if the class is initialized
+     * in stand-alone mode. */
+    double* const src;
     /** An array for holding the reciprocal of the density field. */
     double* const irho;
     enum cell_center {dl,dr,ul,ur};
     mgs_fem_varying_rho(fluid_2d &f);
     mgs_fem_varying_rho(int m_,int n_,bool x_prd_,bool y_prd_,double dx,double dy);
+    ~mgs_fem_varying_rho();
     inline bool not_l(int i) {return x_prd||i>0;}
     inline bool not_r(int i) {return x_prd||i<m-1;}
     inline bool not_lr(int i) {return x_prd||(i>0&&i<m-1);}
@@ -100,6 +103,8 @@ struct mgs_fem_varying_rho {
     }
     inline double inv_cc(int i,int ij,double v) {return v/a_cc(i,ij);}
     double mul_a(int i,int ij);
+    /** Sets up the linear systems on the coarser grids. */
+    inline void setup() {mg.setup();}
     /** Solves the linear system using multigrid V-cycles. */
     inline void solve_v_cycle() {
         if(!mg.solve_v_cycle(tp)) {

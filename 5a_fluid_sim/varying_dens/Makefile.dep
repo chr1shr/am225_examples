@@ -1,0 +1,3 @@
+mgs_fem_vr.o: mgs_fem_vr.cc mgs_fem_vr.hh ../../tgmg/tgmg.hh \
+ ../../tgmg/tgmg_config.hh ../../tgmg/tgmg_predict.hh ../fluid_2d.hh \
+ ../fields.hh ../mgs_fem.hh ../../tgmg/tgmg.cc ../../tgmg/tgmg.hh
