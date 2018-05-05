@@ -30,4 +30,6 @@ bool improv_e::step(double dt) {
     // Complete solution
     for(int i=0;i<dof;i++) q[i]+=0.5*dt*(k1[i]+k2[i]);
     t+=dt;fcount+=2;
+
+    return true;
 }

@@ -30,8 +30,8 @@ int main() {
         for(int j=0;j<7;j++) {
 
             // Compute the number of steps according to a power law. Minimum
-            // steps of 100, and maximum steps of 100000.
-            int steps=int(100.*pow(1000.,0.01*i));
+            // steps of 100, and maximum steps of 500000.
+            int steps=int(100.*pow(5000.,0.01*i));
 
             // Dynamically allocate a solver
             sol_base *sb;
