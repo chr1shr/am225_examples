@@ -19,7 +19,7 @@ void orbit::orb_init(double *q) {
  * \param[in] t_ the current simulation time.
  * \param[in] q the solution array. */
 void orbit::orb_print(double t_,double *q) {
-    printf("%g %g %g %g %g %.10g\n",t_,*q,q[1],q[2],q[3],hamiltonian(q)-init_h);
+    printf("%g %g %g %g %g %.12g\n",t_,*q,q[1],q[2],q[3],hamiltonian(q)-init_h);
 }
 
 /** Computes the Hamiltonian.

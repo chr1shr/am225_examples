@@ -17,13 +17,13 @@ class sym_separable : public sol_base {
         /** The number of steps in the method. */
         const int steps;
         /** The offset in the coefficient table for the method in use. */
-        const int os;
+        double* cstart;
         /** An array for computing the update to the momentum or coordinate
          * variables. */
         double* const del;
         static const int tab_steps[3];
         static const int tab_offset[3];
-        static double coeffs[20];
+        static double coeffs[18];
 };
 
 #endif

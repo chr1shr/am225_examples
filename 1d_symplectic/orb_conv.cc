@@ -1,6 +1,7 @@
 #include "orbit.hh"
 
 #include <cstdio>
+#include <cstring>
 #include <cmath>
 
 #include "omp.h"
@@ -13,13 +14,26 @@ int main() {
     // The eccentricity of the orbit
     const double e=1/3.;
 
-    // The simulation duration, currently set to one complete orbit
-    const double du=6*M_PI*a*sqrt(a);
+    // The simulation duration, currently set to two complete orbits
+    const double du=4*M_PI*a*sqrt(a);
+    const bool exact_period=true;
+
+    // An alternative simulation duration that is not an exact period
+//    const double du=15.;
+//    const bool exact_period=false;
 
     // Non-zero components of the initial condition
-    const double ref2=a*(1+e),ref1=sqrt((1-e)/ref2);
+    double ref[4];
 
-    // Allocate space for storing accuracy
+    // Compute reference solution
+    if(exact_period) ref[2]=a*(1+e),ref[1]=sqrt((1-e)/ref[2]);
+    else {
+        orb_ruth4 sb(a,e);
+        sb.solve_fixed(du,1000000);
+        memcpy(ref,sb.q,4*sizeof(double));
+    }
+
+    // Allocate space for storing accuracy and function evaluations
     int fcount[707];
     double err[707],t0=omp_get_wtime();
 
@@ -31,7 +45,7 @@ int main() {
 
             // Compute the number of steps according to a power law. Minimum
             // steps of 100, and maximum steps of 500000.
-            int steps=int(100.*pow(5000.,0.01*i));
+            int ij=i+101*j,steps=int(100.*pow(5000.,0.01*i));
 
             // Dynamically allocate a solver
             sol_base *sb;
@@ -50,10 +64,11 @@ int main() {
             // when the integration terminated early, mark it as counting
             // negative number of steps to indicate an invalid result.
             if(sb->solve_fixed(du,steps)) {
-                double d1=ref1-sb->q[1],d2=ref2-sb->q[2];
-                err[i+101*j]=sqrt(d1*d1+d2*d2+sb->q[0]*sb->q[0]+sb->q[3]*sb->q[3]);
-                fcount[i+101*j]=sb->fcount;
-            } else fcount[i+101*j]=-1;
+                double del,val=0.;
+                for(int k=0;k<4;k++) del=sb->q[k]-ref[k],val+=del*del;
+                err[ij]=sqrt(val);
+                fcount[ij]=sb->fcount;
+            } else fcount[ij]=-1;
             delete sb;
         }
     }

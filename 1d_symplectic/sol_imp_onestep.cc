@@ -53,7 +53,7 @@ bool imp_onestep::step(double dt) {
         // Switch k1<->k1b array pointers. This will make k1 be used as the new
         // values on the next iteration.
         c=k1b;k1b=k1;k1=c;
-    } while(done<10);
+    } while(done<8);
 
     // Complete solution
     for(int i=0;i<dof;i++) q[i]+=dt*k1[i];
