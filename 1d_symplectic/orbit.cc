@@ -6,9 +6,10 @@
 /** Sets up the initial conditions for the ODE.
  * \param[in] q the array to write to. */
 void orbit::orb_init(double *q) {
+    const double r=a*(1+e);
     *q=0;
-    q[1]=sqrt((1-e)/ *q);
-    q[2]=a*(1+e);
+    q[1]=sqrt((1-e)/r);
+    q[2]=r;
     q[3]=0;
     init_h=hamiltonian(q);
     printf("# Initial H(p,q)=%.12g\n",init_h);

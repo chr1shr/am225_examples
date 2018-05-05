@@ -48,7 +48,7 @@ class orb_euler : public euler, public orbit {
     public:
         orb_euler(double a_,double e_) : euler(4), orbit(a_,e_) {}
         virtual void ff(double t_,double *in,double *out) {
-            orb_fp(in,out+2);orb_fq(in+2,out);
+            orb_fp(in+2,out);orb_fq(in,out+2);
         }
         virtual void print() {orb_print(t,q);}
         virtual void init() {orb_init(q);}
@@ -59,7 +59,7 @@ class orb_back : public imp_onestep, public orbit {
     public:
         orb_back(double a_,double e_) : imp_onestep(4,1), orbit(a_,e_) {}
         virtual void ff(double t_,double *in,double *out) {
-            orb_fp(in,out+2);orb_fq(in+2,out);
+            orb_fp(in+2,out);orb_fq(in,out+2);
         }
         virtual void print() {orb_print(t,q);}
         virtual void init() {orb_init(q);}
@@ -70,7 +70,7 @@ class orb_improv_e : public improv_e, public orbit {
     public:
         orb_improv_e(double a_,double e_) : improv_e(4), orbit(a_,e_) {}
         virtual void ff(double t_,double *in,double *out) {
-            orb_fp(in,out+2);orb_fq(in+2,out);
+            orb_fp(in+2,out);orb_fq(in,out+2);
         }
         virtual void print() {orb_print(t,q);}
         virtual void init() {orb_init(q);}
@@ -81,7 +81,7 @@ class orb_imp_mid : public imp_onestep, public orbit {
     public:
         orb_imp_mid(double a_,double e_) : imp_onestep(4,0.5), orbit(a_,e_) {}
         virtual void ff(double t_,double *in,double *out) {
-            orb_fp(in,out+2);orb_fq(in+2,out);
+            orb_fp(in+2,out);orb_fq(in,out+2);
         }
         virtual void print() {orb_print(t,q);}
         virtual void init() {orb_init(q);}

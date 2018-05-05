@@ -11,7 +11,7 @@
 int main(int argc,char **argv) {
 
     // Number of timesteps
-    const int steps=800;
+    const int steps=1440;
 
     // The semi-major axis of the orbit
     const double a=1.;
@@ -20,7 +20,7 @@ int main(int argc,char **argv) {
     const double e=1/3.;
 
     // The simulation duration, currently set to four complere orbits
-    const double du=8*M_PI*a*sqrt(a);
+    const double du=6*M_PI*a*sqrt(a);
 
     // Check for one command-line argument
     if(argc!=2) {
