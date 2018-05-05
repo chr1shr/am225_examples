@@ -5,7 +5,7 @@ include ../config.mk
 objs=sol_base.o sol_euler.o sol_improv_e.o sol_imp_onestep.o \
 	 sol_sep.o orbit.o
 src=$(patsubst %.o,%.cc,$(objs) $(mg_objs))
-execs=orb_solve
+execs=orb_solve orb_conv
 
 all: $(execs)
 
@@ -24,6 +24,9 @@ clean:
 	$(cxx) $(cflags) $(iflags) -c $<
 
 orb_solve: orb_solve.cc $(objs)
+	$(cxx) $(cflags) -o $@ $^
+
+orb_conv: orb_conv.cc $(objs)
 	$(cxx) $(cflags) -o $@ $^
 
 .PHONY: clean depend

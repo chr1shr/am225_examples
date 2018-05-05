@@ -20,8 +20,9 @@ imp_onestep::~imp_onestep() {
 }
 
 /** Performs an integration step with the one-step implicit method.
- * \param[in] dt the integration step. */
-void imp_onestep::step(double dt) {
+ * \param[in] dt the integration step.
+ * \return True if the step was successful, false otherwise. */
+bool imp_onestep::step(double dt) {
     int iter=0,done=0;
     double delsq,d,*c;
 
@@ -33,10 +34,7 @@ void imp_onestep::step(double dt) {
     do {
 
         // Check for too many iterations
-        if(++iter>1000) {
-            fputs("Too many iterations in IRK\n",stderr);
-            exit(1);
-        }
+        if(++iter>1000) return false;
 
         // Perform update
         for(int i=0;i<dof;i++) dq[i]=q[i]+alpha*dt*k1[i];
@@ -60,4 +58,5 @@ void imp_onestep::step(double dt) {
     // Complete solution
     for(int i=0;i<dof;i++) q[i]+=dt*k1[i];
     t+=dt;
+    return true;
 }

@@ -19,21 +19,26 @@ sym_separable::~sym_separable() {
 }
 
 /** Performs an integration step.
- * \param[in] dt the integration step size. */
-void sym_separable::step(double dt) {
-    double *cp=coeffs+os;
+ * \param[in] dt the integration step size.
+ * \return True for successful completion. */
+bool sym_separable::step(double dt) {
+    double *cp=coeffs+os;fcount+=steps;
 
     for(int i=0;i<steps;i++) {
+
+        // Update the momentum variables
         fp(q+hdof,del);
         for(int i=0;i<hdof;i++) q[i]+=*cp*dt*del[i];
         cp++;
 
+        // Update the position variables
         fq(q,del);
         for(int i=0;i<hdof;i++) q[hdof+i]+=*cp*dt*del[i];
         cp++;
     }
 
     t+=dt;
+    return true;
 }
 
 /** The number of steps for each different mode the class can run in. 0:

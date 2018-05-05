@@ -10,7 +10,7 @@ class improv_e : public sol_base {
         improv_e();
         improv_e(int dof_);
         virtual ~improv_e();
-        virtual void step(double dt);
+        virtual bool step(double dt);
     private:
         double *dq;
         double *k1;

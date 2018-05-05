@@ -9,7 +9,7 @@ class sym_separable : public sol_base {
         const int hdof;
         sym_separable(int dof_,int mode);
         virtual ~sym_separable();
-        virtual void step(double dt);
+        virtual bool step(double dt);
         virtual void ff(double t_,double *in,double *out) {}
         virtual void fp(double *in,double *out) = 0;
         virtual void fq(double *in,double *out) = 0;

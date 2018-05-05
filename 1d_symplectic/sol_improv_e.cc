@@ -16,8 +16,9 @@ improv_e::~improv_e() {
 }
 
 /** Performs an integration step of the second-order Ralston method.
- * \param[in] dt the integration step. */
-void improv_e::step(double dt) {
+ * \param[in] dt the integration step.
+ * \return True for successful completion. */
+bool improv_e::step(double dt) {
 
     // First RK step
     ff(t,q,k1);

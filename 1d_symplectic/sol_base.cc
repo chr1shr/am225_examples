@@ -22,8 +22,10 @@ void sol_base::print() {
 /** Solves the ODE problem with a fixed integration step.
  * \param[in] duration the time to solve for.
  * \param[in] steps the number of integration steps
- * \param[in] output whether to print each integration step. */
-void sol_base::solve_fixed(double duration,int steps,bool output) {
+ * \param[in] output whether to print each integration step.
+ * \return True if the solver exited normally, false if the solver terminated
+ * early. */
+bool sol_base::solve_fixed(double duration,int steps,bool output) {
 
     // Set up initial condition and compute timestep
     init();
@@ -32,7 +34,11 @@ void sol_base::solve_fixed(double duration,int steps,bool output) {
     // Perform integration steps
     if(output) print();
     for(int i=0;i<steps;i++) {
-        step(dt);
+        if(!step(dt)) {
+            if(output) fputs("Too many iterations in IRK method\n",stderr);
+            return false;
+        }
         if(output) print();
     }
+    return true;
 }

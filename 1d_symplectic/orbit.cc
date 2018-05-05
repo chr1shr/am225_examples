@@ -12,7 +12,7 @@ void orbit::orb_init(double *q) {
     q[2]=r;
     q[3]=0;
     init_h=hamiltonian(q);
-    printf("# Initial H(p,q)=%.12g\n",init_h);
+    //printf("# Initial H(p,q)=%.12g\n",init_h);
 }
 
 /** Prints the current state of the solution, plus the Hamiltonian.

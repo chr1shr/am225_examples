@@ -15,7 +15,7 @@ class imp_onestep : public sol_base {
         const double alpha;
         imp_onestep(int dof_,double alpha_);
         virtual ~imp_onestep();
-        virtual void step(double dt);
+        virtual bool step(double dt);
     private:
         double *dq;
         double *k1;

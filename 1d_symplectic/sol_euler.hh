@@ -9,9 +9,7 @@ class euler : public sol_base {
     public:
         euler(int dof_);
         virtual ~euler();
-        virtual void step(double dt);
-        virtual void init() = 0;
-        virtual void ff(double t_,double *in,double *out) = 0;
+        virtual bool step(double dt);
     private:
         double *k1;
 };

@@ -19,7 +19,7 @@ int main(int argc,char **argv) {
     // The eccentricity of the orbit
     const double e=1/3.;
 
-    // The simulation duration, currently set to four complere orbits
+    // The simulation duration, currently set to three complete orbits
     const double du=6*M_PI*a*sqrt(a);
 
     // Check for one command-line argument

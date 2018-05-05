@@ -18,8 +18,8 @@ class sol_base {
         sol_base(int dof_);
         virtual ~sol_base();
         virtual void print();
-        void solve_fixed(double t_end,int iters,bool output=false);
-        virtual void step(double dt) = 0;
+        bool solve_fixed(double t_end,int iters,bool output=false);
+        virtual bool step(double dt) = 0;
         virtual void init() = 0;
         virtual void ff(double t_,double *in,double *out) = 0;
 };

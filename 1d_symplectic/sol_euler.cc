@@ -13,9 +13,11 @@ euler::~euler() {
 }
 
 /** Performs an explicit Euler step.
- * \param[in] dt the integration step. */
-void euler::step(double dt) {
+ * \param[in] dt the integration step.
+ * \return True for successful completion. */
+bool euler::step(double dt) {
     ff(t,q,k1);
     for(int i=0;i<dof;i++) q[i]+=dt*k1[i];
     t+=dt;fcount++;
+    return true;
 }
