@@ -2,7 +2,8 @@
 include ../config.mk
 
 # Lists of files to be built
-objs=sol_base.o sol_euler.o sol_improv_e.o sol_imp_onestep.o orbit.o
+objs=sol_base.o sol_euler.o sol_improv_e.o sol_imp_onestep.o \
+	 sol_sep.o orbit.o
 src=$(patsubst %.o,%.cc,$(objs) $(mg_objs))
 execs=orb_solve
 

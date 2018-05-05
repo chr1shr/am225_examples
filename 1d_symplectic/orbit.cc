@@ -3,26 +3,13 @@
 #include <cstdio>
 #include <cmath>
 
-/** Evaluates the function f(x,y) on the RHS of the ODE.
- * \param[in] t the dependent x variable in Hairer et al.'s notation.
- * \param[in] in the array containing y variable.
- * \param[in] out the function f(x,y). */
-void orbit::orb_ff(double t_,double *in,double *out) {
-    double fac=1/(in[2]*in[2]+in[3]*in[3]);
-    fac*=sqrt(fac);
-    *out=-in[2]*fac;
-    out[1]=-in[3]*fac;
-    out[2]=*in;
-    out[3]=in[1];
-}
-
 /** Sets up the initial conditions for the ODE.
  * \param[in] q the array to write to. */
 void orbit::orb_init(double *q) {
-    *q=0.;
-    q[1]=0.7;
-    q[2]=1.;
-    q[3]=0.;
+    *q=0;
+    q[1]=sqrt((1-e)/ *q);
+    q[2]=a*(1+e);
+    q[3]=0;
     init_h=hamiltonian(q);
     printf("# Initial H(p,q)=%.12g\n",init_h);
 }

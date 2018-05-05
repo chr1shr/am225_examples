@@ -11,7 +11,9 @@ class sol_base {
         int fcount;
         /** The current time. */
         double t;
-        /** The solution vector. */
+        /** The solution vector. For consistency with other routines, this is
+         * called q, but incorporates both position and momentum degrees of
+         * freedom. */
         double *q;
         sol_base(int dof_);
         virtual ~sol_base();
