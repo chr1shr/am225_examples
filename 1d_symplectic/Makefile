@@ -2,9 +2,10 @@
 include ../config.mk
 
 # Lists of files to be built
-objs=dop853.o
+objs=sol_base.o sol_euler.o sol_improv_e.o sol_imp_onestep.o \
+	 sol_sep.o orbit.o
 src=$(patsubst %.o,%.cc,$(objs) $(mg_objs))
-execs=d_test brus_conv
+execs=orb_solve orb_conv
 
 all: $(execs)
 
@@ -13,19 +14,19 @@ all: $(execs)
 
 # A Makefile target to refresh the dependency file
 depend:
-	$(cxx) -MM $(src) >Makefile.dep
+	$(cxx) $(iflags) -MM $(src) >Makefile.dep
 
 # A Makefile target to remove all the built files
 clean:
 	rm -f $(objs) $(execs)
 
 %.o: %.cc
-	$(cxx) $(cflags) -c $<
+	$(cxx) $(cflags) $(iflags) -c $<
 
-d_test: d_test.cc $(objs)
+orb_solve: orb_solve.cc $(objs)
 	$(cxx) $(cflags) -o $@ $^
 
-brus_conv: brus_conv.cc $(objs)
+orb_conv: orb_conv.cc $(objs)
 	$(cxx) $(cflags) -o $@ $^
 
 .PHONY: clean depend

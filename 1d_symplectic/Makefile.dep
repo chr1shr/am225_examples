@@ -1,0 +1,6 @@
+sol_base.o: sol_base.cc sol_base.hh
+sol_euler.o: sol_euler.cc sol_euler.hh sol_base.hh
+sol_improv_e.o: sol_improv_e.cc sol_improv_e.hh sol_base.hh
+sol_imp_onestep.o: sol_imp_onestep.cc sol_imp_onestep.hh sol_base.hh
+orbit.o: orbit.cc orbit.hh sol_euler.hh sol_base.hh sol_improv_e.hh \
+ sol_imp_onestep.hh

@@ -92,7 +92,7 @@ void traffic::solve(const char* filename,int snaps,double duration,double safe_f
 void traffic::init_step_function() {
     for(int i=0;i<m;i++) {
         double x=dx*(i+0.5);
-        a[i]=x>0.25&&x<0.75?1:0;
+        a[i]=x>0.25&&x<0.75?0.8:0;
     }
 }
 

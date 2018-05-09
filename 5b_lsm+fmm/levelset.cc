@@ -5,7 +5,7 @@
 #include "levelset.hh"
 
 /** The class constructor sets up constants the control the geometry and the
- * simulation, dynamically allocates memory for level set.
+ * simulation, dynamically allocates memory for the level set.
  * \param[in] (m_,n_) the number of grid points to use in the horizontal and
  *                    vertical directions.
  * \param[in] (x_prd_,y_prd_) the periodicity in the x and y directions.
@@ -19,7 +19,7 @@ levelset::levelset(const int m_,const int n_,const bool x_prd_,
     ay(ay_), bx(bx_), by(by_), dx((bx_-ax_)/m_), dy((by_-ay_)/n_), xsp(1/dx),
     ysp(1/dy), xxsp(xsp*xsp), yysp(ysp*ysp), filename(filename_),
     fbase(new field[ml*(n+4)]), fm(fbase+2*ml+2),
-    time(0.), f_num(0), buf(new float[m>123?m+5:128]) {}
+    time(0.), f_num(0), oscillate_vel(false), buf(new float[m>123?m+5:128]) {}
 
 /** The class destructor frees the dynamically allocated memory. */
 levelset::~levelset() {
@@ -27,13 +27,13 @@ levelset::~levelset() {
     delete [] fbase;
 }
 
-/** Initializes the simulation, setting up the tracers and simulation fields,
- * and choosing the timestep.
+/** Initializes the simulation, setting up the simulation fields, and choosing
+ * the timestep.
  * \param[in] dt_pad_ the padding factor for the timestep, which should be
  *                    smaller than 1.
- * \param[in] max_spd a maximum fluid speed from which to estimate the
- *                    advection timestep restriction. If a negative value is
- *                    supplied, then the advection CFL condition is explicitly
+ * \param[in] max_spd a maximum speed from which to estimate the advection
+ *                    timestep restriction. If a negative value is supplied,
+ *                    then the advection CFL condition is explicitly
  *                    calculated. */
 void levelset::initialize(int type,double dt_pad,double max_spd) {
 
@@ -45,8 +45,8 @@ void levelset::initialize(int type,double dt_pad,double max_spd) {
     choose_dt(dt_pad,max_spd<=0?advection_dt():(dx>dy?dx:dy)/max_spd);
 }
 
-/** Computes the maximum timestep that can resolve the fluid advection, based
- * on the CFL condition.
+/** Computes the maximum timestep that can resolve the advection, based on the
+ * CFL condition.
  * \return The maximum timestep. */
 double levelset::advection_dt() {
     double adv_dt=0;
@@ -61,10 +61,10 @@ double levelset::advection_dt() {
     return adv_dt==0?std::numeric_limits<double>::max():1./adv_dt;
 }
 
-/** Chooses the timestep based on the limits from advection and viscosity.
+/** Chooses the timestep based on the limit from advection.
  * \param[in] dt_pad the padding factor for the timestep for the physical
  *                   terms, which should be smaller than 1.
- * \param[in] adv_dt the maximum timestep to resolve the fluid advection.
+ * \param[in] adv_dt the maximum timestep to resolve the advection.
  * \param[in] verbose whether to print out messages to the screen. */
 void levelset::choose_dt(double dt_pad,double adv_dt,bool verbose) {
     dt_reg=dt_pad*adv_dt;
@@ -79,7 +79,8 @@ void levelset::choose_dt(double dt_pad,double adv_dt,bool verbose) {
 }
 
 /** Initializes the simulation fields. */
-void levelset::init_fields(int type) {
+void levelset::init_fields(int type,bool oscillate_vel_) {
+    oscillate_vel=oscillate_vel_;
 
     // Loop over the primary grid and set the velocity and pressure
 #pragma omp parallel for
@@ -141,18 +142,16 @@ void levelset::solve(double duration,int frames) {
     f_num+=frames;
 }
 
-/** Steps the simulation fields forward.
+/** Steps the level set field forward.
  * \param[in] dt the time step to use. */
 void levelset::step_forward(double dt) {
     int j;
-    double hx=0.5*dt*xsp,hy=0.5*dt*ysp;
+    double hx=0.5*dt*xsp,hy=0.5*dt*ysp,
+           ft=oscillate_vel?1:0.4*sin(time);
 
 #pragma omp parallel for
     for(j=0;j<n;j++) for(int i=0;i<m;i++) {
         field *fp=fm+(ml*j+i),&f=*fp;
-
-        // Optional velocity multiplier
-        double ft=1;//0.4*sin(time);
 
         // Compute advective terms using the second-order ENO scheme
         double phix,phiy,uc=ft*f.u,vc=ft*f.v;
@@ -161,9 +160,11 @@ void levelset::step_forward(double dt) {
         vc>0?vel_eno2(phiy,hy,fp[ml],f,fp[-ml],fp[-2*ml])
             :vel_eno2(phiy,-hy,fp[-ml],f,fp[ml],fp[2*ml]);
 
+        // Store the update to the level set field
         f.cphi=-uc*phix-vc*phiy;
     }
 
+    // Apply the update
 #pragma omp parallel for
     for(j=0;j<n;j++) {
         field *fp=fm+j*ml,*fe=fp+m;
@@ -175,8 +176,8 @@ void levelset::step_forward(double dt) {
     time+=dt;
 }
 
-/** Calculates one-sided derivatives of the level set field using the second-order ENO2
- * scheme, applying the shift to the X terms.
+/** Calculates one-sided derivatives of the level set field using the
+ * second-order ENO2 scheme.
  * \param[out] phid the computed ENO2 derivative.
  * \param[in] hs a multiplier to apply to the computed fields.
  * \param[in] (f0,f1,f2,f3) the fields to compute the derivative with. */
@@ -232,12 +233,6 @@ void levelset::set_boundaries() {
     }
 }
 
-/** Writes a selection of simulation fields to the output directory.
- * \param[in] k the frame number to append to the output. */
-void levelset::write_files(int k) {
-    output("phi",k);
-}
-
 /** Saves the header file.
  * \param[in] duration the simulation duration.
  * \param[in] frames the number of frames to save. */
@@ -249,18 +244,17 @@ void levelset::save_header(double duration, int frames) {
     fclose(outf);
 }
 
-/** Outputs a 2D array to a file in a format that can be read by Gnuplot.
- * \param[in] prefix the field name to use as the filename prefix.
- * \param[in] mode the code of the field to print.
+/** Outputs the level set field to a file in a format that can be read by
+ * Gnuplot.
  * \param[in] sn the current frame number to append to the filename.
  * \param[in] ghost whether to output the ghost regions or not. */
-void levelset::output(const char *prefix,const int sn,const bool ghost) {
+void levelset::output(const int sn,const bool ghost) {
     int l=ghost?ml:m;
     double disp=0.5-(ghost?2:0);
 
     // Assemble the output filename and open the output file
     char *bufc=((char*) buf);
-    sprintf(bufc,"%s/%s.%d",filename,prefix,sn);
+    sprintf(bufc,"%s/phi.%d",filename,prefix,sn);
     FILE *outf=safe_fopen(bufc,"wb");
 
     // Output the first line of the file
