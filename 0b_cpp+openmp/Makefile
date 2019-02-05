@@ -3,9 +3,9 @@ include ../config.mk
 
 # Lists of executables
 execs=cpp_example1 cpp_example2 cpp_example3 cpp_example4 cpp_example5 \
-      diffuse happy openmp_example1 openmp_example2 openmp_example3 \
-      race_condition race_condition2 ridders_array sum_atomic sum_critical \
-      sum_reduction
+      diffuse false_sharing happy openmp_example1 openmp_example2 \
+      openmp_example3 race_condition race_condition2 ridders_array sum_atomic \
+      sum_critical sum_reduction
 
 all: $(execs)
 
@@ -32,6 +32,9 @@ cpp_example5: cpp_example5.cc
 	$(cxx) $(cflags) -o $@ $^
 
 diffuse: diffuse.cc
+	$(cxx) $(cflags) -o $@ $^
+
+false_sharing: false_sharing.cc
 	$(cxx) $(cflags) -o $@ $^
 
 happy: happy.cc
