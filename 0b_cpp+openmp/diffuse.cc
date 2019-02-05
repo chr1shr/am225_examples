@@ -9,7 +9,7 @@ int main() {
 
     // Number of snapshots to output, and iterations between snapshot
     const int snaps=40,iters=20000;
-    
+
     // Snapshot storage
     double z[m*(snaps+1)];
 
@@ -37,11 +37,11 @@ int main() {
 //#pragma omp parallel for
             for(int j=0;j<m;j++) {
                 int jl,jr;
-            
+
                 // Compute indices on left and right, taking into account periodicity
                 jl=j==0?m-1+j:j-1;
                 jr=j==m-1?1-m+j:j+1;
-                
+
                 // Perform update
                 b[j]=((1-2*nu)*a[j]+nu*(a[jl]+a[jr]));
             }
