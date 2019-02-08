@@ -22,7 +22,7 @@ clean:
 %.o: %.cc
 	$(cxx) $(cflags) $(iflags) -c $<
 
-ode_test: ode_test.cc $(objs)
+ode_test: ode_test.cc $(objs) transp.hh
 	$(cxx) $(cflags) -o $@ $^
 
 ode_conv: ode_conv.cc $(objs)

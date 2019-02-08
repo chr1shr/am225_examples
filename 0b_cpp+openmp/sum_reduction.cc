@@ -1,5 +1,5 @@
 #include <cstdio>
-    
+
 int main() {
     unsigned int c=0;
 #pragma omp parallel for reduction(+:c)

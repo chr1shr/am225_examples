@@ -1,5 +1,5 @@
 #include <cstdio>
-    
+
 int main() {
     int c[4096],d;
 

@@ -37,7 +37,7 @@ int main() {
     // Allocate memory for complex FFTW output data
     fftw_complex *c=fftw_alloc_complex(n_max/2+1);
 
-    // Time the FFTW execution using the three different planning routines 
+    // Time the FFTW execution using the three different planning routines
     for(int n=16;n<=n_max;n<<=1)
         printf("%d %g %g %g %g\n",n,
                fftw_time(f,c,n,FFTW_ESTIMATE),
