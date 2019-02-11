@@ -1,4 +1,4 @@
-// Advection-diffusion-limited dissolution code
+// DOP853 integrator re-written as a C++ class
 //
 // Author   : Chris H. Rycroft (Harvard SEAS / Lawrence Berkeley Laboratory)
 // Email    : chr@alum.mit.edu
