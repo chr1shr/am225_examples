@@ -16,8 +16,8 @@ const double tend=20;
 
 int main() {
 
-    // Construct the test class, set the level of accuracy, and carry out
-    // the reference ODE solution
+    // Construct the test class, set the level of accuracy, and carry out the
+    // reference ODE solution
     brusselator o;
     o.atoli=1e-15;
     o.rtoli=1e-15;
