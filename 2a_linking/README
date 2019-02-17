@@ -1,0 +1,20 @@
+Gnuplot binary output example
+=============================
+This directory contains a small example for doing binary output that is
+suitable to be read by Gnuplot. To test it, use the following steps:
+
+1. Edit the Makefile to ensure that the compiler and flags are correct
+for your system.
+
+2. Type "make" to compile the code.
+
+3. Run the example program with "./gp_test". This will create a test output
+file called "test_out.gnu".
+
+4. In Gnuplot, type
+
+splot 'test_out.gnu' matrix binary
+
+This can be abbreviated to
+
+sp 'test.out' mat bin
