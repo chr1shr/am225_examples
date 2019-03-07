@@ -70,10 +70,12 @@ Each Unit has several different directories with programs within them:
 
 1d_symplectic - Symplectic integration examples
 
-2a_lapack+krylov - Examples using BLAS, LAPACK. Krylov methods applied to a
+2a_linking - Small example of linking to precompiled binary object files.
+
+2b_lapack+krylov - Examples using BLAS, LAPACK. Krylov methods applied to a
 radial basis function test case.
 
-2b_fft+ddecomp - Fast Fourier Transform and domain decomposition examples
+2c_fft+ddecomp - Fast Fourier Transform and domain decomposition examples
 
 3a_f_element - Finite element examples
 
