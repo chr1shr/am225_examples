@@ -12,7 +12,7 @@ void cubic_1d_fe::init_const() {
 /** Initializes the source function to be a linear slope, f(x)=1.5-x. */
 void cubic_1d_fe::init_slope() {
     double xx=1;
-    for(int i=0;i<=3*n;i++,xx+=h) f[i]=1.5-xx;
+    for(int i=0;i<=3*n;i++,xx+=h) f[i]=xx-1.5;
     assemble_b();
 }
 
@@ -21,7 +21,7 @@ void cubic_1d_fe::init_slope() {
 void cubic_1d_fe::init_mms() {
     const double o=5*M_PI;
     double xx=1;
-    for(int i=0;i<=3*n;i++,xx+=h) f[i]=exp(1-xx)*(o*(1-2*xx)*cos(o*xx)+((1-o*o)*xx-1)*sin(o*xx));
+    for(int i=0;i<=3*n;i++,xx+=h) f[i]=-exp(1-xx)*(o*(1-2*xx)*cos(o*xx)+((1-o*o)*xx-1)*sin(o*xx));
     assemble_b();
 }
 
@@ -90,7 +90,7 @@ void cubic_1d_fe::assemble_b() {
     // Loop over each interval, and compute the contributions
     // from each Lagrange polynomial pair
     for(k=0;k<3*n;k+=3) for(i=(k==0?1:0);i<4;i++)
-        for(j=0;j<4;j++) b[-1+k+i]-=D[i+4*j]*f[k+j];
+        for(j=0;j<4;j++) b[-1+k+i]+=D[i+4*j]*f[k+j];
 
     // Normalize the results, and add in the Neumann condition to the last
     // entry
