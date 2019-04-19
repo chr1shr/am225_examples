@@ -23,10 +23,10 @@ die "Need either two or four arguments" unless $#ARGV==1 || $#ARGV==3;
 if(!defined $opt_p) {
     $uname=`uname`;
     if($uname=~/Linux/) {
-        $nodes=`awk '/^processor/ {++n} END {print n}' /proc/cpuinfo`;
+        $nodes=`lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`;
         chomp $nodes;
     } elsif($uname=~/Darwin/) {
-        $nodes=`sysctl -n hw.ncpu`;
+        $nodes=`sysctl -n hw.physicalcpu_max`;
         chomp $nodes;
     } else {
         $nodes=4;
@@ -143,13 +143,8 @@ wait foreach 1..($queue?$nodes:$h-1);
 unless ($opt_w) {
     $mf=$ebase."_".$ARGV[1];
     $uname=`uname`;
-    if($uname=~/Linux/) {
-        unlink "$mf.mpg";
-        system "ffmpeg -r 30 -y -i $odir/fr_%4d.png -vb 20M $mf.mpg"
-    } elsif($uname=~/Darwin/) {
-        unlink "$mf.mov";
-        system "qt_export --sequencerate=30 $odir/fr_0001.png --loadsettings=../misc/qtprefs/qt --replacefile $mf.mov";
-    }
+    unlink "$mf.mov";
+    system "ffmpeg -r 24 -y -i $odir/fr_%4d.png -preset slow -c:v libx265 -crf 17 -pix_fmt yuv420p -tag:v hvc1 -movflags faststart $mf.mov";
 }
 
 # Delete the temporary output directory
