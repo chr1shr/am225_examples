@@ -15,9 +15,8 @@ int main() {
     // periodicity, and physical constants
     levelset ls(256,256,true,true,-1,1,-1,1,fn);
 
-    // Initialize the tracers, and set the timestep based on multiplying the
-    // maximum allowable by a padding factor
-    ls.initialize(0,0.2);
+    // Initialize the velocity field
+    ls.initialize(0,false,0.2);
 
     // Run the simulation for a specified duration, outputting snapshots at
     // regular intervals

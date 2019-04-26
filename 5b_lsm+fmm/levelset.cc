@@ -29,13 +29,16 @@ levelset::~levelset() {
 
 /** Initializes the simulation, setting up the simulation fields, and choosing
  * the timestep.
+ * \param[in] type the velocity field type.
+ * \param[in] oscillate_vel_ whether to oscillate the velocity field.
  * \param[in] dt_pad_ the padding factor for the timestep, which should be
  *                    smaller than 1.
  * \param[in] max_spd a maximum speed from which to estimate the advection
  *                    timestep restriction. If a negative value is supplied,
  *                    then the advection CFL condition is explicitly
  *                    calculated. */
-void levelset::initialize(int type,double dt_pad,double max_spd) {
+void levelset::initialize(int type,bool oscillate_vel_,double dt_pad,double max_spd) {
+    oscillate_vel=oscillate_vel_;
 
     // Initialize the simulation fields
     init_fields(type);
@@ -79,8 +82,7 @@ void levelset::choose_dt(double dt_pad,double adv_dt,bool verbose) {
 }
 
 /** Initializes the simulation fields. */
-void levelset::init_fields(int type,bool oscillate_vel_) {
-    oscillate_vel=oscillate_vel_;
+void levelset::init_fields(int type) {
 
     // Loop over the primary grid and set the velocity and pressure
 #pragma omp parallel for
@@ -254,7 +256,7 @@ void levelset::output(const int sn,const bool ghost) {
 
     // Assemble the output filename and open the output file
     char *bufc=((char*) buf);
-    sprintf(bufc,"%s/phi.%d",filename,prefix,sn);
+    sprintf(bufc,"%s/phi.%d",filename,sn);
     FILE *outf=safe_fopen(bufc,"wb");
 
     // Output the first line of the file

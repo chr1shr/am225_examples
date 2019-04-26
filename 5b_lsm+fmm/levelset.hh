@@ -65,11 +65,13 @@ class levelset {
         void solve(double duration,int frames);
         void step_forward(double dt);
         void init_fields(int type);
-        void write_files(int k);
-        void initialize(int type,double dt_pad,double max_vel=-1);
+        inline void write_files(int k) {
+            output(k,false);
+        }
+        void initialize(int type,bool oscillate_vel_,double dt_pad,double max_vel=-1);
         double advection_dt();
         void choose_dt(double dt_pad,double adv_dt,bool verbose=true);
-        void output(const char *prefix,const int sn,const bool ghost=false);
+        void output(const int sn,const bool ghost=false);
         void save_header(double duration,int frames);
         /** Chooses a timestep size that is the largest value smaller than dt_reg,
         * such that a given interval length is a perfect multiple of this timestep.
