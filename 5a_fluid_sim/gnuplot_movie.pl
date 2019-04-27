@@ -142,7 +142,6 @@ wait foreach 1..($queue?$nodes:$h-1);
 # Additional code to automatically make a movie
 unless ($opt_w) {
     $mf=$ebase."_".$ARGV[1];
-    $uname=`uname`;
     unlink "$mf.mov";
     system "ffmpeg -r 24 -y -i $odir/fr_%4d.png -preset slow -c:v libx265 -crf 17 -pix_fmt yuv420p -tag:v hvc1 -movflags faststart $mf.mov";
 }
