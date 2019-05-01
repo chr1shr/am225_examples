@@ -461,7 +461,7 @@ void fluid_2d::output(const char *prefix,const int mode,const int sn,const bool 
 
     // Determine whether to output a cell-centered field or not
     bool cen=mode>=0&&mode<=1;
-    int l=ghost?ml:(cen?m:m+1);
+    int lx=ghost?ml:(cen?m:m+1),ly=ghost?n+4:(cen?n:n+1);
     double disp=(cen?0.5:0)-(ghost?2:0);
 
     // Assemble the output filename and open the output file
@@ -471,14 +471,14 @@ void fluid_2d::output(const char *prefix,const int mode,const int sn,const bool 
 
     // Output the first line of the file
     int i,j;
-    float *bp=buf+1,*be=bp+l;
-    *buf=l;
-    for(i=0;i<l;i++) *(bp++)=ax+(i+disp)*dx;
-    fwrite(buf,sizeof(float),l+1,outf);
+    float *bp=buf+1,*be=bp+lx;
+    *buf=lx;
+    for(i=0;i<lx;i++) *(bp++)=ax+(i+disp)*dx;
+    fwrite(buf,sizeof(float),lx+1,outf);
 
     // Output the field values to the file
     field *fr=ghost?fbase:fm;
-    for(j=0;j<l;j++,fr+=ml) {
+    for(j=0;j<ly;j++,fr+=ml) {
         field *fp=fr;
         *buf=ay+(j+disp)*dy;bp=buf+1;
         switch(mode) {
@@ -486,7 +486,7 @@ void fluid_2d::output(const char *prefix,const int mode,const int sn,const bool 
             case 1: while(bp<be) *(bp++)=(fp++)->v;break;
             case 2: while(bp<be) *(bp++)=(fp++)->p;break;
         }
-        fwrite(buf,sizeof(float),l+1,outf);
+        fwrite(buf,sizeof(float),lx+1,outf);
     }
 
     // Close the file
