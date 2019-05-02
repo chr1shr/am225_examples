@@ -95,10 +95,14 @@ void tgmg_base<S,V,M>::gauss_seidel_from_zero() {
                 for(int i=1;i<m-1;i++,ij++) z[ij]=q.inv_cc(i,ij,b[ij]-q.a_cl(i,ij)*z[ij-1]);
                 z[ij]=q.inv_cc(m-1,ij,(x_prd?b[ij]-q.a_cr(m-1,ij)*z[ij-m+1]:b[ij])-q.a_cl(m-1,ij)*z[ij-1]);
             }
+            if(y_prd) {
+                for(V* zp=z;zp<z+m;zp++) *zp=V(0.);
+                if(n&1) for(V* zp=z+mn-m;zp<z+mn;zp++) *zp=V(0.);
+            }
 #pragma omp for
             for(int j=0;j<mn;j+=2*m) {
                 int ij=j;
-                if(x_prd) z[ij+m-1]=0.;
+                if(x_prd) z[ij+m-1]=V(0.);
                 for(int i=0;i<m-1;i++,ij++) {z[ij+1]=0.;z[ij]=q.inv_cc(i,ij,b[ij]-q.mul_a(i,ij));}
                 z[ij]=q.inv_cc(m-1,ij,b[ij]-q.mul_a(m-1,ij));
             }

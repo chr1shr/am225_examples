@@ -254,7 +254,6 @@ class tgmg_level : public tgmg_base<tgmg_level<V,M>,V,M> {
         inline M a_ur(int i,int ij) {return s[10*ij+8];}
         inline V inv_cc(int i,int ij,V v) {return s[10*ij+9]*v;}
         V mul_a(int i,int ij);
-        void print_rat();
         /** Applies Gauss--Seidel sweeps during the first part of the
          * V-cycle, when it is necessary to also set the solution array
          * to zero. If the number of sweeps is non-zero, the rapid
