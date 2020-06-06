@@ -47,7 +47,7 @@ def ridders(lam):
             b=d;fb=fd
             if fc<0:
                 a=c;fa=fc
-    print "# Too many iterations"
+    print("# Too many iterations")
     sys.exit()
 
 # Total table size
@@ -59,7 +59,7 @@ yv=np.empty((ts))
 
 # Time the table construction
 t0=time()
-for i in xrange(ts):
+for i in range(ts):
     yv[i]=ridders(xv[i])
 dt=time()-t0
-print "Time: %.4g s (total)\nTime: %g microseconds (per value)\n" % (dt,1e6*dt/ts)
+print("Time: %.4g s (total)\nTime: %g microseconds (per value)\n" % (dt,1e6*dt/ts))

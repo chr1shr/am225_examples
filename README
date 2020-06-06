@@ -29,12 +29,12 @@ typing:
 
 ln -s config/config.mk.linux config.mk
 
-On a Mac system using GCC 9 installed with MacPorts (www.macports.org), use
+On a Mac system using GCC 10 installed with MacPorts (www.macports.org), use
 the following:
 
 ln -s config/config.mk.mac_mp config.mk
 
-On a Mac system using GCC 9 installed with Homebrew (https://brew.sh), use
+On a Mac system using GCC 10 installed with Homebrew (https://brew.sh), use
 the following:
 
 ln -s config/config.mk.mac_hb config.mk

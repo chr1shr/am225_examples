@@ -1,5 +1,5 @@
 # C++ compiler
-cxx=g++-mp-9 -fopenmp
+cxx=g++-mp-10 -fopenmp
 
 # Compilation flags
 cflags=-Wall -ansi -pedantic -O3
