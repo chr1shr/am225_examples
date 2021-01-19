@@ -6,7 +6,7 @@ high-performance computing.
 
 See the main website here:
 
-http://iacs-courses.seas.harvard.edu/courses/am225/
+https://courses.seas.harvard.edu/courses/am225/
 
 This Git repository contains example codes from the course. The codes are
 primarily written in C++ using the OpenMP library for multithreading. Some
@@ -47,7 +47,7 @@ directories and type "make" to compile everything.
 
 Organization
 ============
-The course is divided into six Units:
+The course is divided into six units:
 
 - Unit 0: Introduction and multithreaded programming
 - Unit 1: Advanced ODE integration methods and theory
