@@ -30,8 +30,8 @@ int main() {
     t1=omp_get_wtime();
     delete [] s;
 
-    // Time how long it takes for multiple thread to perform the calculation if
-    // they allocate their own memory, which is guaranteed to be in separate
+    // Time how long it takes for multiple threads to perform the calculation
+    // if they allocate their own memory, which is guaranteed to be in separate
     // locations
     puts("\nMethod B - operating on separate memory:");
 #pragma omp parallel
