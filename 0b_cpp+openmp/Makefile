@@ -3,15 +3,15 @@ include ../config.mk
 
 # Lists of executables
 execs=cpp_example1 cpp_example2 cpp_example3 cpp_example4 cpp_example5 \
-      diffuse false_sharing happy openmp_example1 openmp_example2 \
-      openmp_example3 race_condition race_condition2 ridders_array sum_atomic \
-      sum_critical sum_reduction
+	  diffuse false_sharing happy openmp_example1 openmp_example2 \
+	  openmp_example2b openmp_example3 race_condition race_condition2 \
+	  ridders_array sum_atomic sum_critical sum_reduction
 
 all: $(execs)
 
 # A Makefile target to remove all the built files
 clean:
-	rm $(execs)
+	rm -f $(execs)
 
 # Makefile rule to build an executable. Note $@ is a shorthand for the file to
 # be built and $^ is a shorthand for all the dependencies. (Can also use $< to
@@ -44,6 +44,9 @@ openmp_example1: openmp_example1.cc
 	$(cxx) $(cflags) -o $@ $^
 
 openmp_example2: openmp_example2.cc
+	$(cxx) $(cflags) -o $@ $^
+
+openmp_example2b: openmp_example2b.cc
 	$(cxx) $(cflags) -o $@ $^
 
 openmp_example3: openmp_example3.cc
