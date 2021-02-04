@@ -24,5 +24,6 @@ int main() {
     t3=omp_get_wtime();
     printf("Method 1 : %g s\n"
            "Method 2 : %g s\n"
-           "Method 3 : %g s\n",t1-t0,t2-t1,t3-t2);
+           "Method 3 : %g s\n"
+           "Sum      : %g\n",t1-t0,t2-t1,t3-t2,s);
 }
