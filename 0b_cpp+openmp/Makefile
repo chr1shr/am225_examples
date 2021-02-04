@@ -4,8 +4,8 @@ include ../config.mk
 # Lists of executables
 execs=cpp_example1 cpp_example2 cpp_example3 cpp_example4 cpp_example5 \
 	  diffuse false_sharing happy openmp_example1 openmp_example2 \
-	  openmp_example2b openmp_example3 race_condition race_condition2 \
-	  ridders_array sum_atomic sum_critical sum_reduction
+	  openmp_example2b openmp_example3 poly_timing race_condition \
+	  race_condition2 ridders_array sum_atomic sum_critical sum_reduction
 
 all: $(execs)
 
@@ -50,6 +50,9 @@ openmp_example2b: openmp_example2b.cc
 	$(cxx) $(cflags) -o $@ $^
 
 openmp_example3: openmp_example3.cc
+	$(cxx) $(cflags) -o $@ $^
+
+poly_timing: poly_timing.cc
 	$(cxx) $(cflags) -o $@ $^
 
 race_condition: race_condition.cc
