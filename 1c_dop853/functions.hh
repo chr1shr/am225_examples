@@ -25,7 +25,7 @@ class brusselator : public dop853 {
         FILE *fp;
         brusselator() : dop853(2) {
             fp=safe_fopen("dt.out1");
-                *w=1.5;w[1]=3.;
+            *w=1.5;w[1]=3.;
         }
         ~brusselator() {
             fclose(fp);

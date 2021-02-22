@@ -4,7 +4,9 @@
  * \param[in] filename the name of the file to write to.
  * \param[in] fld the array to use.
  * \param[in] m the horizontal grid size.
- * \param[in] n the vertical grid size. */
+ * \param[in] n the vertical grid size.
+ * \param[in] (ax,bx) the horizontal coordinate range.
+ * \param[in] (ay,by) the vertical coordinate range. */
 void gnuplot_output(const char* filename,double *fld,int m,int n,double ax,double bx,double ay,double by) {
     double dx=(bx-ax)/(m-1),dy=(by-ay)/(n-1);
     int i,j;
