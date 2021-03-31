@@ -66,11 +66,24 @@ void cubic_1d_fe::mul_A(double *in,double *out) {
     // Set the output vector to initially be zero
     for(i=0;i<3*n;i++) out[i]=0.;
 
-    // Loop over each interval, and compute the contribution from
-    // each
-    for(k=0;k<3*n;k+=3) for(i=(k==0?1:0);i<4;i++)
-        for(j=(k==0?1:0);j<4;j++)
+    // Loop over each interval. Here, k=3q as defined in the notes.
+    for(k=0;k<3*n;k+=3) {
+
+        // Loop over different basis functions in this interval. Here i is
+        // alpha, and j is beta as defined in the notes. Usually i and j run
+        // from 0 to 3. For the first interval when k=0, the first basis
+        // function is not included because it is not present due to the
+        // essential boundary condition. Hence i and j run from 1 to 3 in that
+        // case.
+        for(i=(k==0?1:0);i<4;i++) for(j=(k==0?1:0);j<4;j++) {
+
+            // Add a contribution to the matrix-vector product from the two
+            // basis functions. Note that the -1 shift is included here in the
+            // indexing because of the essential boundary condition, so that
+            // the solution at x_0=1 is not part of the vector.
             out[-1+k+i]+=((k+1./h)*B[i+4*j]+C[i+4*j])*in[-1+k+j];
+        }
+    }
 }
 
 /** Computes the source vector in the linear system, which is based
@@ -87,10 +100,23 @@ void cubic_1d_fe::assemble_b() {
     // Clear the source function
     for(i=0;i<3*n;i++) b[i]=0.;
 
-    // Loop over each interval, and compute the contributions
-    // from each Lagrange polynomial pair
-    for(k=0;k<3*n;k+=3) for(i=(k==0?1:0);i<4;i++)
-        for(j=0;j<4;j++) b[-1+k+i]+=D[i+4*j]*f[k+j];
+    // Loop over each interval. Here k=3q as defined in the notes.
+    for(k=0;k<3*n;k+=3) {
+
+        // Loop over different basis functions in this interval. Here
+        // i is alpha and j is beta as defined in the notes. Usually i and j
+        // run from 0 to 3, but for the first interval i only runs from 1 to 3
+        // because of the essential boundary condition.
+        for(i=(k==0?1:0);i<4;i++) for(j=0;j<4;j++) {
+
+            // Add a contribution to the source vector from the two basis
+            // functions. The -1 shift is included when indexing b since the
+            // solution at x_0=1 is not part of the vector. However, f does
+            // contain a term at x_0=1, and thus there is no shift applied
+            // there.
+            b[-1+k+i]+=D[i+4*j]*f[k+j];
+        }
+    }
 
     // Normalize the results, and add in the Neumann condition to the last
     // entry
